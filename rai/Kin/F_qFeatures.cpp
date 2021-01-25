@@ -266,6 +266,7 @@ void F_qLimits2::phi2(arr& y, arr& J, const FrameL& F){
     rai::Joint *j = f->joint;
     if(!j) continue;
     if(!j->limits.N) continue;
+    if(!j->active) continue;
     uint d=j->qDim();
     for(uint k=0; k<d; k++) { //in case joint has multiple dimensions
       double lo = j->limits(2*k+0);
@@ -287,6 +288,7 @@ uint F_qLimits2::dim_phi2(const FrameL& F) {
     rai::Joint *j = f->joint;
     if(!j) continue;
     if(!j->limits.N) continue;
+    if(!j->active) continue;
     m += 2*j->qDim();
   }
   return m;

@@ -30,7 +30,6 @@ struct ConfigurationViewer : GLDrawer {
 
   rai::Configuration& getConfiguration(){ return C; }
 
-
   int update(bool watch=false);
   void glDraw(OpenGL&);
   void ensure_gl();

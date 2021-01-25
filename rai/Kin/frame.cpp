@@ -43,7 +43,7 @@ void rai::Transformation_Qtoken::operator=(const rai::Transformation& _Q) { f.Q=
 // Frame
 //
 
-bool rai_Kin_frame_ignoreQuatNormalizationWarning = false;
+bool rai_Kin_frame_ignoreQuatNormalizationWarning = true;
 
 rai::Frame::Frame(Configuration& _K, const Frame* copyFrame)
   : C(_K) {

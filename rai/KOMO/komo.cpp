@@ -1354,7 +1354,7 @@ void KOMO::add_collision(bool hardConstraint, double margin, double prec) {
 
 void KOMO::add_jointLimits(bool hardConstraint, double margin, double prec) {
   if(hardConstraint) { //interpreted as hard constraint (default)
-    addObjective({}, make_shared<F_qLimits>(), {}, OT_ineq, {-prec}, NoArr);
+    addObjective({}, make_shared<F_qLimits2>(), {"ALL"}, OT_ineq, {prec}, NoArr);
   } else { //cost term
     NIY;
 //    setTask(0., -1., new TM_Proxy(TMT_allP, {}, margin), OT_sos, NoArr, prec);
@@ -1727,7 +1727,27 @@ void KOMO::run_prepare(double addInitializationNoise) {
 
   //add noise
   if(addInitializationNoise>0.) {
-    rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+    //rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+
+    const arr limits = pathConfig.getLimits();
+    const uint dim = limits.dim(0);
+    arr sample(dim);
+
+    // sample uniformly between 0,1
+    rndUniform(sample,0,1,false);
+
+    // scale sample
+    for (uint i=0; i<sample.d0; ++i){
+      if(limits(i,1) > limits(i,0)){
+        sample(i) = limits(i, 0) + sample(i) * (limits(i, 1) - limits(i, 0));
+      }
+      else {
+        // default: [-5, 5]
+        sample(i) = sample(i) * 10 - 5;
+      }
+    }
+
+    x = sample;
   }
 }
 
