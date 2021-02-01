@@ -132,8 +132,9 @@ struct Configuration : GLDrawer {
   /// @name set state
   void setJointState(const arr& _q);
   void setJointState(const arr& _q, const FrameL& F, bool activesOnly=true);
-  void setJointState(const arr& _q, const uintA& F){ setJointState(_q, getFrames(F), true); } ///< same as setJointState() with getFrames()
+  void setJointState(const arr& _q, const uintA& F){ setJointState(_q, getFrames(F), false); } ///< same as setJointState() with getFrames()
   void setJointStateSlice(const arr& _q, uint t, bool activesOnly=true){  setJointState(_q, getJointsSlice(t, activesOnly), activesOnly);  }
+  void setJointStateSlice(const arr& _q, uint t, const uintA& sliceFrameIDs){  CHECK_EQ(frames.nd,2, ""); setJointState(_q, sliceFrameIDs + t*frames.d1);  }
   void setFrameState(const arr& X){ setFrameState(X, frames); } ///< same as setFrameState() for all \ref frames
   void setFrameState(const arr& X, const FrameL& F);
   void setFrameState(const arr& X, const uintA& F){ setFrameState(X, getFrames(F)); } ///< same as setFrameState() with getFrames()

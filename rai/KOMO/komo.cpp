@@ -1490,15 +1490,7 @@ void KOMO_ext::setMoveTo(Configuration& world, Frame& endeff, Frame& target, byt
 }
 
 void KOMO::setConfiguration(int t, const arr& q) {
-#ifdef KOMO_PATH_CONFIG
-  FrameL F;
-  for(auto* f:timeSlices[k_order+t]) if(f->joint) F.append(f);
-  pathConfig.setJointState(q, F, false);
-#else
-  if(!configurations.N) setupConfigurations();
-  if(t<0) CHECK_LE(-t, (int)k_order, "");
-  configurations(t+k_order)->setJointState(q);
-#endif
+  pathConfig.setJointStateSlice(q, t, world.getJointIDs());
 }
 
 void KOMO::setConfiguration_X(int t, const arr& X) {
