@@ -122,18 +122,19 @@ struct Configuration : GLDrawer {
   /// @name get state
   uint getJointStateDimension() const;
   const arr& getJointState() const;
-  arr getJointState(const FrameL& F, bool activesOnly=true) const;
-  arr getJointState(const uintA& F, bool activesOnly=true) const { return getJointState(getFrames(F), activesOnly); } ///< same as getJointState() with getFrames()
-  arr getJointStateSlice(uint t, bool activesOnly=true){  return getJointState(getJointsSlice(t, activesOnly), activesOnly);  }
+  arr getJointState(const FrameL& F) const;
+  arr getJointState(const uintA& F) const { return getJointState(getFrames(F)); } ///< same as getJointState() with getFrames()
+  arr getJointStateSlice(uint t){  return getJointState(getJointsSlice(t, true));  }
+  arr getJointStateSlice(uint t, const uintA& sliceFrameIDs){  return getJointState(sliceFrameIDs + t*frames.d1);  }
   arr getFrameState() const { return getFrameState(frames); } ///< same as getFrameState() for all \ref frames
   arr getFrameState(const FrameL& F) const;
   arr getFrameState(const uintA& F) const { return getFrameState(getFrames(F)); } ///< same as getFrameState() with getFrames()
 
   /// @name set state
   void setJointState(const arr& _q);
-  void setJointState(const arr& _q, const FrameL& F, bool activesOnly=true);
-  void setJointState(const arr& _q, const uintA& F){ setJointState(_q, getFrames(F), false); } ///< same as setJointState() with getFrames()
-  void setJointStateSlice(const arr& _q, uint t, bool activesOnly=true){  setJointState(_q, getJointsSlice(t, activesOnly), activesOnly);  }
+  void setJointState(const arr& _q, const FrameL& F);
+  void setJointState(const arr& _q, const uintA& F){ setJointState(_q, getFrames(F)); } ///< same as setJointState() with getFrames()
+  void setJointStateSlice(const arr& _q, uint t){  setJointState(_q, getJointsSlice(t, true));  }
   void setJointStateSlice(const arr& _q, uint t, const uintA& sliceFrameIDs){  CHECK_EQ(frames.nd,2, ""); setJointState(_q, sliceFrameIDs + t*frames.d1);  }
   void setFrameState(const arr& X){ setFrameState(X, frames); } ///< same as setFrameState() for all \ref frames
   void setFrameState(const arr& X, const FrameL& F);

@@ -466,13 +466,12 @@ const arr& Configuration::getJointState() const {
 }
 
 /// get a q-vector for only a subset of joints (no force DOFs)
-arr Configuration::getJointState(const FrameL& joints, bool activesOnly) const {
+arr Configuration::getJointState(const FrameL& joints) const {
   ((Configuration*)this)->ensure_q();
   uint nd=0;
   for(Frame* f:joints) {
     Joint* j = f->joint;
     if(!j){ LOG(-1) <<"frame '" <<f->name <<"'[" <<f->ID <<"] is not a joint!"; continue; }
-    if(!j->active && activesOnly) HALT("frame '" <<f->name <<"' is a joint, but INACTIVE!");
     if(!j->mimic){
       nd += j->dim;
     }
@@ -486,9 +485,9 @@ arr Configuration::getJointState(const FrameL& joints, bool activesOnly) const {
     if(!j->mimic){
       if(j->active){
         for(uint ii=0; ii<j->dim; ii++) x(nd+ii) = q(j->qIndex+ii);
-      }else if(!activesOnly){
+      }else{
         for(uint ii=0; ii<j->dim; ii++) x(nd+ii) = qInactive(j->qIndex+ii);
-      }else HALT("");
+      }
       nd += j->dim;
     }
   }
@@ -529,7 +528,7 @@ void Configuration::setJointState(const arr& _q) {
 }
 
 /// set the DOFs (joints and forces) for the given subset of frames
-void Configuration::setJointState(const arr& _q, const FrameL& F, bool activesOnly) {
+void Configuration::setJointState(const arr& _q, const FrameL& F) {
   setJointStateCount++; //global counter
   getJointState();
 
@@ -543,7 +542,6 @@ void Configuration::setJointState(const arr& _q, const FrameL& F, bool activesOn
       }
       j->calc_Q_from_q(q, j->qIndex);
     }else{
-      if(activesOnly) HALT("frame '" <<f->name <<"' is a joint, but INACTIVE!");
       if(!j->mimic){
         for(uint ii=0; ii<j->dim; ii++) qInactive.elem(j->qIndex+ii) = _q(nd+ii);
       }

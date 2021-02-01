@@ -1498,15 +1498,7 @@ void KOMO::setConfiguration_X(int t, const arr& X) {
 }
 
 arr KOMO::getConfiguration_q(int t) {
-#ifdef KOMO_PATH_CONFIG
-  FrameL F;
-  for(auto* f:timeSlices[k_order+t]) if(f->joint) F.append(f);
-  return pathConfig.getJointState(F, false);
-#else
-  if(!configurations.N) setupConfigurations();
-  if(t<0) CHECK_LE(-t, (int)k_order, "");
-  return configurations(t+k_order)->getJointState();
-#endif
+  return pathConfig.getJointStateSlice(t, world.getJointIDs());
 }
 
 arr KOMO::getFrameState(int t) {
@@ -1528,12 +1520,12 @@ arr KOMO::getPath_q(int t) {
 #endif
 }
 
-arr KOMO::getPath(uintA joints, const bool activesOnly){
-  if(!joints.N) joints = jointsToIndices( world.activeJoints );
-  arr q = pathConfig.getJointState(joints+timeSlices(0+k_order,0)->ID, activesOnly);
+arr KOMO::getPath(uintA joints){
+  if(!joints.N) joints = world.getJointIDs();
+  arr q = pathConfig.getJointState(joints+k_order*timeSlices.d1);
   q.resizeCopy(T, q.N);
   for(uint t=1; t<T; t++) {
-    q[t] = pathConfig.getJointState(joints+timeSlices(t+k_order,0)->ID, activesOnly);
+    q[t] = pathConfig.getJointState(joints+(t+k_order)*timeSlices.d1);
   }
   return q;
 }
@@ -1560,14 +1552,7 @@ arr KOMO::getPath_frames(const uintA& frames) {
 arrA KOMO::getPath_q() {
   arrA q(T);
   for(uint t=0; t<T; t++) {
-#ifdef KOMO_PATH_CONFIG
-    FrameL F;
-    for(auto* f:timeSlices[k_order+t]) if(f->joint && f->joint->active) F.append(f);
-    q(t) = pathConfig.getJointState(F, true);
-#else
-    CHECK_EQ(configurations.N, k_order+T, "configurations are not setup yet");
-    q(t) = configurations(t+k_order)->getJointState();
-#endif
+    q(t) = pathConfig.getJointStateSlice(t);
   }
   return q;
 }
