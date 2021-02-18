@@ -44,7 +44,7 @@
 #endif
 
 //#ifndef RAI_SWIFT
-//#  define FCLmode
+#define FCLmode
 //#endif
 
 #define KOMO_PATH_CONFIG
@@ -1724,7 +1724,7 @@ void KOMO::run_prepare(double addInitializationNoise) {
       }
     }
 
-    x = sample;
+    x = sample();
   }
 }
 

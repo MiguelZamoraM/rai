@@ -1,6 +1,7 @@
 #include <Kin/kin.h>
 #include <Gui/opengl.h>
 #include <Core/graph.h>
+#include <Kin/frame.h>
 
 const char *USAGE =
     "\nUsage:  kinEdit <g-filename>"
@@ -63,6 +64,29 @@ int main(int argc,char **argv){
   C.ensure_q();
   C.checkConsistency();
   C.sortFrames();
+
+  arr pos(0, 3);
+  for (auto f: C.frames){
+    if (!f->shape){continue;}
+    auto c = f->getShape()._mesh->center();
+    pos.append(c.getArr() + f->getPosition());
+    rai::Transformation t(c, {1, 0, 0, 0});
+    f->set_Q() = t;
+  }
+
+  const arr tmp = mean(pos);
+  for (auto f: C.frames){
+    if (!f->shape){continue;}
+    auto t = f->get_Q();
+    t.addRelativeTranslation({-tmp(0), -tmp(1), 0});
+    f->set_Q() = t;
+  }
+
+  const double scale = rai::getParameter<double>("scale", 1.);
+  for (auto *f: C.frames){
+    if (f->shape) f->getShape().mesh().scale(scale);
+    f->setPosition(f->getPosition()*scale);
+  }
 
   if(rai::checkParameter<bool>("writeMeshes")){
     rai::system("mkdir -p meshes");

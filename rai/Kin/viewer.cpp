@@ -211,7 +211,7 @@ bool rai::ConfigurationViewer::playVideo(bool watch, double delay, const char* s
 }
 
 void rai::ConfigurationViewer::savePng(const char* saveVideoPath) {
-  write_ppm(gl->captureImage, STRING(saveVideoPath<<std::setw(4)<<std::setfill('0')<<(pngCount++)<<".ppm"));
+  write_ppm(gl->captureImage, STRING(saveVideoPath<<std::setw(5)<<std::setfill('0')<<(pngCount++)<<".ppm"));
 }
 
 rai::Camera& rai::ConfigurationViewer::displayCamera() {
