@@ -302,6 +302,15 @@ void Configuration::addCopies(const FrameL& F, const ForceExchangeL& _forces) {
   for(Frame* f:F) {
     Frame* f_new = new Frame(*this, f);
     FId2thisId(f->ID) = f_new->ID;
+
+    //convert constant joints to mimic joints
+    if(f->joint && f->ats["constant"]){
+      Frame *f_orig = getFrame(f_new->name); //identify by name!!!
+      if(f_orig!=f_new){
+        CHECK(f_orig->joint, "");
+        f_new->joint->setMimic(f_orig->joint);
+      }
+    }
   }
 
   //relink frames - special attention to mimic'ing
@@ -311,15 +320,7 @@ void Configuration::addCopies(const FrameL& F, const ForceExchangeL& _forces) {
     //take care of within-F mimic joints:
     if(f->joint && f->joint->mimic){
       CHECK(f->joint && f->joint->mimic, "");
-      f_new->joint->mimic = frames.elem(FId2thisId(f->joint->mimic->frame->ID))->joint;
-    }
-    //convert constant joints to mimic joints
-    if(f->joint && f->ats["constant"]){
-      Frame *f_orig = getFrame(f_new->name); //identify by name!!!
-      if(f_orig!=f_new){
-        CHECK(f_orig->joint, "");
-        f_new->joint->mimic = f_orig->joint;
-      }
+      f_new->joint->setMimic(frames.elem(FId2thisId(f->joint->mimic->frame->ID))->joint);
     }
   }
 
@@ -382,7 +383,10 @@ FrameL Configuration::getJoints(bool activesOnly) const{
 
 FrameL Configuration::getJointsSlice(uint t, bool activesOnly) const{
   FrameL F;
-  for(auto* f:frames[t]) if(f->joint && (!activesOnly || f->joint->active)) F.append(f);
+  for(auto* f:frames[t]){
+    if((f->joint && (!activesOnly || f->joint->active))
+       || f->forces.N)  F.append(f);
+  }
   return F;
 }
 
@@ -536,6 +540,7 @@ void Configuration::setJointState(const arr& _q, const FrameL& F) {
   for(Frame* f:F) {
     Joint* j = f->joint;
     if(!j && !f->forces.N) HALT("frame '" <<f->name <<"' is not a joint and has no forces!");
+    if(!j) continue;
     if(j->active){
       if(!j->mimic){
         for(uint ii=0; ii<j->dim; ii++) q.elem(j->qIndex+ii) = _q(nd+ii);
@@ -691,24 +696,22 @@ arr Configuration::getLimits() const {
       if(j->limits.N) {
         limits(i+k, 0)=j->limits(2*k+0); //lo
         limits(i+k, 1)=j->limits(2*k+1); //up
-      } else {
-        limits(i+k, 0)=0.; //lo
-        limits(i+k, 1)=0.; //up
       }
     }
   }
-//  for(ForceExchange* f: forces) {
-//    uint i=f->qIndex;
-//    uint d=f->qDim();
-//    for(uint k=0; k<3; k++) { //in case joint has multiple dimensions
-//        limits(i+k, 0)=-10.; //lo
-//        limits(i+k, 1)=+10.; //up
-//    }
-//    for(uint k=3; k<6; k++) { //in case joint has multiple dimensions
-//        limits(i+k, 0)=-1.; //lo
-//        limits(i+k, 1)=+1.; //up
-//    }
-//  }
+  for(ForceExchange* f: forces) {
+    uint i=f->qIndex;
+    uint d=f->qDim();
+    CHECK_EQ(d, 6, "");
+    for(uint k=0; k<3; k++) {
+      limits(i+k, 0)=-10.; //lo
+      limits(i+k, 1)=+10.; //up
+    }
+    for(uint k=3; k<6; k++) {
+      limits(i+k, 0)=-1.; //lo
+      limits(i+k, 1)=+1.; //up
+    }
+  }
 //    cout <<"limits:" <<limits <<endl;
   return limits;
 }
@@ -1059,6 +1062,10 @@ bool Configuration::checkConsistency() const {
         CHECK(j->mimic>(void*)1, "mimic was not parsed correctly");
         CHECK(frames.contains(j->mimic->frame), "mimic points to a frame outside this kinematic configuration");
       } else {
+      }
+
+      for(Joint* m:j->mimicers) {
+        CHECK_EQ(m->mimic, j, "");
       }
     }
 
@@ -1425,7 +1432,6 @@ void Configuration::jacobian_pos(arr& J, Frame* a, const Vector& pos_world) cons
           R *= j->scale;
           J.setMatrixBlock(R.sub(0, -1, 0, 1), 0, j_idx);
         } else if(j->type==JT_transXYPhi) {
-          if(j->mimic) NIY;
           arr R = j->X().rot.getArr();
           R *= j->scale;
           J.setMatrixBlock(R.sub(0, -1, 0, 1), 0, j_idx);
@@ -1435,7 +1441,6 @@ void Configuration::jacobian_pos(arr& J, Frame* a, const Vector& pos_world) cons
           J.elem(1, j_idx+2) += tmp.y;
           J.elem(2, j_idx+2) += tmp.z;
         } else if(j->type==JT_phiTransXY) {
-          if(j->mimic) NIY;
           Vector tmp = j->axis ^ (pos_world-j->X().pos);
           tmp *= j->scale;
           J.elem(0, j_idx) += tmp.x;
@@ -1446,7 +1451,6 @@ void Configuration::jacobian_pos(arr& J, Frame* a, const Vector& pos_world) cons
           J.setMatrixBlock(R.sub(0, -1, 0, 1), 0, j_idx+1);
         }
         if(j->type==JT_XBall) {
-          if(j->mimic) NIY;
           arr R = conv_vec2arr(j->X().rot.getX());
           R *= j->scale;
           R.reshape(3, 1);
@@ -2359,6 +2363,9 @@ void Configuration::report(std::ostream& os) const {
      <<" #forces=" <<forces.N
      <<" #evals=" <<setJointStateCount
      <<endl;
+
+//  os <<" limits=" <<getLimits() <<endl;
+  //  os <<" joints=" <<getJointNames() <<endl;
 }
 
 void Configuration::readFromGraph(const Graph& G, bool addInsteadOfClear) {
@@ -2499,7 +2506,8 @@ void Configuration::readFromGraph(const Graph& G, bool addInsteadOfClear) {
         }
         Frame* mimicFrame = getFrame(jointName, true, true);
         CHECK(mimicFrame, "the argument to 'mimic', '" <<jointName <<"' is not a frame name");
-        j->mimic = mimicFrame->joint;
+        j->mimic=0; //UNDO the =(Joint*)1
+        j->setMimic( mimicFrame->joint );
         if(!j->mimic) HALT("The joint '" <<*j <<"' is declared mimicking '" <<jointName <<"' -- but that doesn't exist!");
         j->type = j->mimic->type;
         j->q0 = j->mimic->q0;
@@ -3239,19 +3247,25 @@ void editConfiguration(const char* filename, Configuration& C) {
   for(; !exit;) {
     cout <<"reloading `" <<filename <<"' ... " <<std::endl;
     Configuration C_tmp;
-    FileToken file(filename, true);
-    try {
-      lineCount=1;
-      Graph G(file);
-      G.checkConsistency();
-      C_tmp.readFromGraph(G);
-      C = C_tmp;
-      C.report();
-    } catch(std::runtime_error& err) {
-      cout <<"line " <<lineCount <<": " <<err.what() <<" -- please check the file and re-save" <<endl;
-      //      continue;
+    {
+      FileToken file(filename, true);
+      Graph G;
+      try {
+        lineCount=1;
+        G.read(file);
+        G.checkConsistency();
+      } catch(std::runtime_error& err) {
+        cout <<"g-File Synax Error line " <<lineCount <<": " <<err.what() <<" -- please check the file and re-save" <<endl;
+      }
+      try {
+        C_tmp.readFromGraph(G);
+        C = C_tmp;
+        C.report();
+      } catch(std::runtime_error& err) {
+        cout <<"Configuration initialization failed: " <<err.what() <<" -- please check the file and re-save" <<endl;
+      }
+      file.cd_start(); //important: also on crash - cd back to original
     }
-    file.cd_start(); //important: also on crash - cd back to original
     cout <<"watching..." <<endl;
     int key = -1;
     C.gl()->recopyMeshes(C);

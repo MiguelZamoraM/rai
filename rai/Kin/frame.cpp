@@ -376,57 +376,64 @@ void rai::Frame::write(std::ostream& os) const {
 
 /************* USER INTERFACE **************/
 
-void rai::Frame::setShape(rai::ShapeType shape, const arr& size) {
+rai::Frame& rai::Frame::setShape(rai::ShapeType shape, const arr& size) {
   getShape().type() = shape;
   getShape().size() = size;
   getShape().createMeshes();
+  return *this;
 }
 
-void rai::Frame::setPose(const rai::Transformation& _X) {
+rai::Frame& rai::Frame::setPose(const rai::Transformation& _X) {
   ensure_X();
   X = _X;
   _state_updateAfterTouchingX();
+  return *this;
 }
 
-void rai::Frame::setPosition(const arr& pos) {
+rai::Frame& rai::Frame::setPosition(const arr& pos) {
   ensure_X();
   X.pos.set(pos);
   _state_updateAfterTouchingX();
+  return *this;
 }
 
-void rai::Frame::setQuaternion(const arr& quat) {
+rai::Frame& rai::Frame::setQuaternion(const arr& quat) {
   ensure_X();
   X.rot.set(quat);
   X.rot.normalize();
   _state_updateAfterTouchingX();
+  return *this;
 }
 
-void rai::Frame::setRelativePosition(const arr& pos) {
+rai::Frame& rai::Frame::setRelativePosition(const arr& pos) {
   CHECK(parent, "you cannot set relative position for a frame without parent");
   Q.pos.set(pos);
   _state_updateAfterTouchingQ();
+  return *this;
 }
 
-void rai::Frame::setRelativeQuaternion(const arr& quat) {
+rai::Frame& rai::Frame::setRelativeQuaternion(const arr& quat) {
   CHECK(parent, "you cannot set relative position for a frame without parent");
   Q.rot.set(quat);
   Q.rot.normalize();
   _state_updateAfterTouchingQ();
+  return *this;
 }
 
-void rai::Frame::setPointCloud(const arr& points, const byteA& colors) {
+rai::Frame& rai::Frame::setPointCloud(const arr& points, const byteA& colors) {
   getShape().type() = ST_pointCloud;
   if(!points.N) {
     cerr <<"given point cloud has zero size" <<endl;
-    return;
+    return *this;
   }
   getShape().mesh().V.clear().operator=(points).reshape(-1, 3);
   if(colors.N) {
     getShape().mesh().C.clear().operator=(convert<double>(byteA(colors))/255.).reshape(-1, 3);
   }
+  return *this;
 }
 
-void rai::Frame::setConvexMesh(const arr& points, const byteA& colors, double radius) {
+rai::Frame& rai::Frame::setConvexMesh(const arr& points, const byteA& colors, double radius) {
   if(!radius) {
     getShape().type() = ST_mesh;
     getShape().mesh().V.clear().operator=(points).reshape(-1, 3);
@@ -442,40 +449,48 @@ void rai::Frame::setConvexMesh(const arr& points, const byteA& colors, double ra
   if(colors.N) {
     getShape().mesh().C.clear().operator=(convert<double>(byteA(colors))/255.).reshape(-1, 3);
   }
+  return *this;
 }
 
-void rai::Frame::setColor(const arr& color) {
+rai::Frame& rai::Frame::setColor(const arr& color) {
   getShape().mesh().C = color;
+  return *this;
 }
 
-void rai::Frame::setJoint(rai::JointType jointType) {
+rai::Frame& rai::Frame::setJoint(rai::JointType jointType) {
   if(joint) { delete joint; joint=nullptr; }
   if(jointType != JT_none) {
     new Joint(*this, jointType);
   }
+  if(jointType == JT_free) { joint->limits = {-10.,10,-10,10,-10,10, -1.,1,-1,1,-1,1,-1,1}; }
+  return *this;
 }
 
-void rai::Frame::setContact(int cont) {
+rai::Frame& rai::Frame::setContact(int cont) {
   getShape().cont = cont;
+  return *this;
 }
 
-void rai::Frame::setMass(double mass) {
+rai::Frame& rai::Frame::setMass(double mass) {
   if(mass<0.) {
     if(inertia) delete inertia;
   } else {
     getInertia().mass = mass;
   }
+  return *this;
 }
 
-void rai::Frame::addAttribute(const char* key, double value) {
+rai::Frame& rai::Frame::addAttribute(const char* key, double value) {
   ats.newNode<double>(key, {}, value);
+  return *this;
 }
 
-void rai::Frame::setJointState(const arr& q) {
+rai::Frame& rai::Frame::setJointState(const arr& q) {
   CHECK(joint, "cannot setJointState for a non-joint");
   CHECK_EQ(q.N, joint->dim, "given q has wrong dimension");
   joint->calc_Q_from_q(arr{q}, 0);
   C._state_q_isGood = false;
+  return *this;
 }
 
 arr rai::Frame::getSize() {
@@ -586,12 +601,12 @@ rai::Joint::Joint(Frame& f, Joint* copyJoint)
   frame->C.reset_q();
 
   if(copyJoint) {
-    qIndex=copyJoint->qIndex; dim=copyJoint->dim; mimic=reinterpret_cast<Joint*>(copyJoint->mimic?1l:0l);
+    qIndex=copyJoint->qIndex; dim=copyJoint->dim;
     type=copyJoint->type; axis=copyJoint->axis; limits=copyJoint->limits; q0=copyJoint->q0; H=copyJoint->H; scale=copyJoint->scale;
     active=copyJoint->active;
 
-    if(copyJoint->mimic) {
-      mimic = frame->C.frames.elem(copyJoint->mimic->frame->ID)->joint;
+    if(copyJoint->mimic){
+      setMimic(frame->C.frames.elem(copyJoint->mimic->frame->ID)->joint);
     }
 
     if(copyJoint->uncertainty) {
@@ -608,7 +623,8 @@ rai::Joint::Joint(Frame& from, Frame& f, Joint* copyJoint)
 rai::Joint::~Joint() {
   frame->C.reset_q();
   frame->joint = nullptr;
-  //if(frame->parent) frame->unLink();
+  for(Joint *j:mimicers) j->mimic=0;
+  if(mimic) mimic->mimicers.removeValue(this);
 }
 
 const rai::Transformation& rai::Joint::X() const {
@@ -619,16 +635,28 @@ const rai::Transformation& rai::Joint::Q() const {
   return frame->get_Q();
 }
 
+void rai::Joint::setMimic(rai::Joint* j){
+  if(!j){
+    if(mimic) mimic->mimicers.removeValue(this);
+    mimic=0;
+  }else{
+    CHECK(!mimic,"");
+    mimic=j;
+    mimic->mimicers.append(this);
+  }
+}
+
 uint rai::Joint::qDim() {
   if(dim==UINT_MAX) dim=getDimFromType();
   return dim;
 }
 
 void rai::Joint::calc_Q_from_q(const arr& q_full, uint _qIndex) {
+  if(type==JT_rigid) return;
   CHECK(dim!=UINT_MAX, "");
   CHECK_LE(_qIndex+dim, q_full.N, "");
   rai::Transformation& Q = frame->Q;
-  if(type!=JT_rigid) Q.setZero();
+  Q.setZero();
   std::shared_ptr<arr> q_copy;
   double* qp;
   if(scale==1.) {
@@ -640,7 +668,11 @@ void rai::Joint::calc_Q_from_q(const arr& q_full, uint _qIndex) {
     qp = q_copy->p;
   }
   if(mimic) {
-    Q = mimic->frame->get_Q();
+    if(type!=JT_tau){
+      Q = mimic->frame->get_Q();
+    }else{
+      frame->tau = mimic->frame->tau;
+    }
   } else {
     switch(type) {
       case JT_hingeX: {
@@ -744,6 +776,15 @@ void rai::Joint::calc_Q_from_q(const arr& q_full, uint _qIndex) {
     frame->_state_setXBadinBranch();
   }
   //    link->link = A * Q * B; //total rel transformation
+
+  for(Joint* j:mimicers){
+    if(type!=JT_tau){
+      j->frame->Q = Q;
+      j->frame->_state_setXBadinBranch();
+    }else{
+      j->frame->tau = frame->tau;
+    }
+  }
 }
 
 arr rai::Joint::calc_q_from_Q(const rai::Transformation& Q) const {
@@ -1145,7 +1186,7 @@ void rai::Shape::read(const Graph& ats) {
     if(ats.get(d, "meshscale"))  { mesh().scale(d); }
     if(ats.get(x, "meshscale"))  { mesh().scale(x(0), x(1), x(2)); }
     if(ats.get(mesh().C, "color")) {
-      CHECK(mesh().C.N==3 || mesh().C.N==4, "");
+      CHECK(mesh().C.N==3 || mesh().C.N==4, "color needs to be 3D or 4D (floats)");
     }
 
     if(mesh().V.N && type()==ST_none) type()=ST_mesh;
@@ -1339,22 +1380,28 @@ void rai::Shape::createMeshes() {
       HALT("createMeshes not possible for shape type '" <<_type <<"'");
     }
   }
+//  auto func = functional(false);
+//  if(func){
+//    mesh().setImplicitSurfaceBySphereProjection(*func, 2.);
+//  }
 }
 
-shared_ptr<ScalarFunction> rai::Shape::functional(){
+shared_ptr<ScalarFunction> rai::Shape::functional(bool worldCoordinates){
+  rai::Transformation pose = 0;
+  if(worldCoordinates) pose = frame.ensure_X();
   //create mesh for basic shapes
   switch(_type) {
     case rai::ST_none: HALT("shapes should have a type - somehow wrong initialization..."); break;
     case rai::ST_box:
-      return make_shared<DistanceFunction_ssBox>(frame.ensure_X(), size(0), size(1), size(2), 0.);
+      return make_shared<DistanceFunction_ssBox>(pose, size(0), size(1), size(2), 0.);
     case rai::ST_sphere:
-      return make_shared<DistanceFunction_Sphere>(frame.ensure_X(), radius());
+      return make_shared<DistanceFunction_Sphere>(pose, radius());
     case rai::ST_cylinder:
-      return make_shared<DistanceFunction_Cylinder>(frame.ensure_X(), size(-1), size(-2));
+      return make_shared<DistanceFunction_Cylinder>(pose, size(-2), size(-1));
     case rai::ST_capsule:
-      return make_shared<DistanceFunction_Capsule>(frame.ensure_X(), size(-1), size(-2));
+      return make_shared<DistanceFunction_Capsule>(pose, size(-2), size(-1));
     case rai::ST_ssBox: {
-      return make_shared<DistanceFunction_ssBox>(frame.ensure_X(), size(0), size(1), size(2), size(3));
+      return make_shared<DistanceFunction_ssBox>(pose, size(0), size(1), size(2), size(3));
     default:
       return shared_ptr<ScalarFunction>();
     }

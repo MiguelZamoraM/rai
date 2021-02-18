@@ -79,6 +79,13 @@ enum SkeletonSymbol {
   SY_alignByInt,
 
   SY_makeFree,
+  SY_forceBalance,
+
+  SY_touchBoxNormalX,
+  SY_touchBoxNormalY,
+  SY_touchBoxNormalZ,
+
+  SY_end,
 
 };
 
@@ -96,6 +103,7 @@ stdOutPipe(SkeletonEntry)
 typedef rai::Array<SkeletonEntry> Skeleton;
 
 intA getSwitchesFromSkeleton(const Skeleton& S, const rai::Configuration& world);
+double getMaxPhaseFromSkeleton(const Skeleton& S);
 void writeSkeleton(std::ostream& os, const Skeleton& S, const intA& switches= {});
 
 //===========================================================================
@@ -174,7 +182,7 @@ struct KOMO : NonCopyable {
                                      ObjectiveType type, const arr& scale=NoArr, const arr& target=NoArr, int order=-1, int deltaFromStep=0, int deltaToStep=0);
 
   void addSwitch(const arr& times, bool before, rai::KinematicSwitch* sw);
-  void addSwitch(const arr& times, bool before, rai::JointType type, rai::SwitchInitializationType init,
+  rai::KinematicSwitch* addSwitch(const arr& times, bool before, rai::JointType type, rai::SwitchInitializationType init,
                  const char* ref1, const char* ref2,
                  const rai::Transformation& jFrom=NoTransformation, const rai::Transformation& jTo=NoTransformation);
   void addContact_slide(double startTime, double endTime, const char* from, const char* to);
@@ -219,7 +227,9 @@ struct KOMO : NonCopyable {
   void addSwitch_on(double time, const char* from, const char* to, bool copyInitialization=false);
 
   //-- objectives - logic level (used within LGP)
-  void setSkeleton(const Skeleton& S, bool ignoreSwitches=false);
+  void setSkeleton(const Skeleton& S);
+  void setSkeleton(const Skeleton& S, rai::ArgWord sequenceOrPath);
+
 
   //macros for pick-and-place in CGO -- should perhaps not be here.. KOMOext?
   void add_StableRelativePose(const std::vector<int>& confs, const char* gripper, const char* object) {
@@ -297,13 +307,10 @@ struct KOMO : NonCopyable {
   void checkGradients();          ///< checks all gradients numerically
 
   int view(bool pause=false, const char* txt=nullptr);
-  int view_play(bool pause=false, double delay=.2);
+  int view_play(bool pause=false, double delay=.2, const char* saveVideoPath=nullptr);
 
   void plotTrajectory();
   void plotPhaseTrajectory();
-  bool displayTrajectory(double delay=1., bool watch=true, bool overlayPaths=true, const char* saveVideoPath=nullptr, const char* addText=nullptr); ///< display the trajectory; use "vid/z." as vid prefix
-  bool displayPath(const char* txt, bool watch=true, bool full=true); ///< display the trajectory; use "vid/z." as vid prefix
-  rai::Camera& displayCamera();   ///< access to the display camera to change the view
 
   //===========================================================================
   //

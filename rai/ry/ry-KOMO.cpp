@@ -19,9 +19,22 @@ Skeleton list2skeleton(const pybind11::list& L) {
   Skeleton S;
   for(uint i=0; i<L.size(); i+=3) {
     std::vector<double> when = L[i].cast<std::vector<double>>();
-    SkeletonSymbol symbol = L[i+1].cast<SkeletonSymbol>();
-    ry::I_StringA frames = L[i+2].cast<ry::I_StringA>();
-    S.append(SkeletonEntry(when[0], when[1], symbol, I_conv(frames)));
+    CHECK(when.size()<=2, "Skeleton error entry " <<i/3 <<" time interval: interval needs no, 1, or 2 elements");
+    if(when.size()==0) when={0.,-1.};
+    if(when.size()==1) when={when[0],when[0]};
+    SkeletonSymbol symbol;
+    try{
+      symbol = L[i+1].cast<SkeletonSymbol>();
+    } catch(std::runtime_error& err) {
+      LOG(-1) <<"Skeleton error line " <<i/3 <<" symbol: " <<err.what() <<endl;
+    }
+    StringA frames;
+    try{
+      frames = L[i+2].cast<StringA>();
+    } catch(std::runtime_error& err) {
+      LOG(-1) <<"Skeleton error line " <<i/3 <<" frames: " <<err.what() <<endl;
+    }
+    S.append(SkeletonEntry(when[0], when[1], symbol, frames));
   }
   return S;
 }
@@ -116,7 +129,8 @@ void init_KOMO(pybind11::module& m) {
        pybind11::arg("endTime"),
        pybind11::arg("prevFromFrame"),
        pybind11::arg("fromFrame"),
-       pybind11::arg("toFrame")
+       pybind11::arg("toFrame"),
+       pybind11::arg("firstSwitch")=true
        )
 
   .def("addSwitch_magic", &KOMO::addSwitch_magic)
@@ -132,7 +146,9 @@ void init_KOMO(pybind11::module& m) {
        pybind11::arg("elasticity") = .8,
        pybind11::arg("stickiness") = 0.)
 
-
+  .def("setSkeleton", [](std::shared_ptr<KOMO>& self, const pybind11::list& S, rai::ArgWord sequenceOrPath) {
+        self->setSkeleton(list2skeleton(S), sequenceOrPath);
+      })
 
 //-- run
 
@@ -176,9 +192,14 @@ void init_KOMO(pybind11::module& m) {
   })
 
   .def("getReport", [](std::shared_ptr<KOMO>& self) {
-//    rai::Graph G = self->getProblemGraph(true);
     rai::Graph R = self->getReport(true);
     return graph2dict(R);
+  })
+
+  .def("reportProblem", [](std::shared_ptr<KOMO>& self) {
+    std::stringstream str;
+    self->reportProblem(str);
+    return str.str();
   })
 
   .def("getConstraintViolations", [](std::shared_ptr<KOMO>& self) {
@@ -194,7 +215,13 @@ void init_KOMO(pybind11::module& m) {
 //-- display
 
   .def("view", &KOMO::view)
-  .def("view_play", &KOMO::view_play)
+    .def("view_play",
+	 &KOMO::view_play,
+	 "",
+	 pybind11::arg("pause"),
+       pybind11::arg("delay"),
+	 pybind11::arg("saveVideoPath") = nullptr)
+
   .def("view_close", [](shared_ptr<KOMO>& self) {
     self->pathConfig.gl().reset();
   }, "close the view")
@@ -230,24 +257,58 @@ void init_KOMO(pybind11::module& m) {
 //.export_values();
 
   pybind11::enum_<SkeletonSymbol>(m, "SY")
-  ENUMVAL(SY, touch)
-  ENUMVAL(SY, above)
-  ENUMVAL(SY, inside)
-  ENUMVAL(SY, impulse)
-  ENUMVAL(SY, stable)
-  ENUMVAL(SY, stableOn)
-  ENUMVAL(SY, dynamic)
-  ENUMVAL(SY, dynamicOn)
-  ENUMVAL(SY, dynamicTrans)
-  ENUMVAL(SY, liftDownUp)
+      //geometric:
+      ENUMVAL(SY,touch)
+      ENUMVAL(SY,above)
+      ENUMVAL(SY,inside)
+      ENUMVAL(SY,oppose)
 
-  ENUMVAL(SY, contact)
-  ENUMVAL(SY, bounce)
+      ENUMVAL(SY,impulse) //old
+      ENUMVAL(SY,initial)
+      ENUMVAL(SY,free) //old
 
-  ENUMVAL(SY, magic)
+      //pose constraints:
+      ENUMVAL(SY,poseEq)
+      ENUMVAL(SY,stableRelPose)
+      ENUMVAL(SY,stablePose)
 
-  ENUMVAL(SY, push)
-  ENUMVAL(SY, graspSlide)
+      //mode switches:
+      ENUMVAL(SY,stable)
+      ENUMVAL(SY,stableOn)
+      ENUMVAL(SY,dynamic)
+      ENUMVAL(SY,dynamicOn)
+      ENUMVAL(SY,dynamicTrans)
+      ENUMVAL(SY,quasiStatic)
+      ENUMVAL(SY,quasiStaticOn)
+      ENUMVAL(SY,downUp) //old
+      ENUMVAL(SY,break)
+
+      //interactions:
+      ENUMVAL(SY,contact)
+      ENUMVAL(SY,contactStick)
+      ENUMVAL(SY,contactComplementary)
+      ENUMVAL(SY,bounce)
+
+      //mode switches:
+      ENUMVAL(SY,magic)
+      ENUMVAL(SY,magicTrans)
+
+      //grasps/placements:
+      ENUMVAL(SY,topBoxGrasp)
+      ENUMVAL(SY,topBoxPlace)
+
+      ENUMVAL(SY,push)  //old
+      ENUMVAL(SY,graspSlide) //old
+
+      ENUMVAL(SY,dampMotion)
+
+      ENUMVAL(SY,noCollision) //old
+      ENUMVAL(SY,identical)
+
+      ENUMVAL(SY,alignByInt)
+
+      ENUMVAL(SY,makeFree)
+      ENUMVAL(SY,forceBalance)
   .export_values();
 
 }

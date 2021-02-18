@@ -167,7 +167,7 @@ void testWalkAndPick(bool keyframesOnly){
 
 void testHandover(bool keyframesOnly){
   rai::Configuration C;
-  C.addFile("model.g");
+  C.addFile("model2.g");
 
   KOMO komo;
 
@@ -183,15 +183,97 @@ void testHandover(bool keyframesOnly){
 
   Skeleton S = {
     //grasp
-    { 1., 1., SY_touch, {"gripper", "stick"} },
-    { 1., 2., SY_stable, {"gripper", "stick"} },
+    { 1., 1., SY_touch, {"R_endeff", "stick"} },
+    { 1., 2., SY_stable, {"R_endeff", "stick"} },
 
     //handover
-    { 2., 2., SY_touch, {"handB", "stick"} },
-    { 2., -1., SY_stable, {"handB", "stick"} },
+    { 2., 2., SY_touch, {"L_endeff", "stick"} },
+    { 2., -1., SY_stable, {"L_endeff", "stick"} },
 
     //touch something
-    { 3., 3., SY_touch, {"stick", "ball"} },
+    { 3., -1., SY_touch, {"stick", "ball"} },
+  };
+  komo.setSkeleton(S);
+
+  komo.optimize();
+
+  komo.getReport(true);
+  komo.view(true, "optimized motion");
+  while(komo.view_play(true));
+}
+
+//===========================================================================
+
+void testStackAndBalance(bool keyframesOnly){
+  rai::Configuration C;
+  C.addFile("model2.g");
+
+  KOMO komo;
+
+  komo.setModel(C, false);
+  if(!keyframesOnly){
+    komo.setTiming(5.5, 30, 5., 2);
+    komo.add_qControlObjective({}, 2, 1e0);
+  }else{
+    komo.setTiming(6., 1, 2., 1);
+    komo.add_qControlObjective({}, 1, 1e-1);
+  }
+  komo.addSquaredQuaternionNorms();
+
+  Skeleton S = {
+    //pick
+    { 1., 1., SY_touch, {"R_endeff", "box0"} },
+    { 1., 2., SY_stable, {"R_endeff", "box0"} },
+    { .9, 1.1, SY_downUp, {"R_endeff"} },
+
+    //place
+    { 2., 2., SY_touch, {"table", "box0"} },
+    { 2., -1., SY_stable, {"table", "box0"} },
+    { 1.9, 2.1, SY_downUp, {"R_endeff"} },
+
+    //pick
+    { 1.5, 1.5, SY_touch, {"L_endeff", "box1"} },
+    { 1.5, 3., SY_stable, {"L_endeff", "box1"} },
+    { 1.4, 1.5, SY_downUp, {"L_endeff"} },
+
+    //place
+    { 3., 3., SY_touch, {"box0", "box1"} },
+    { 3., -1., SY_stable, {"box0", "box1"} },
+    { 2.9, 3.1, SY_downUp, {"L_endeff"} },
+
+    { 3., 4., SY_forceBalance, {"box1"} },
+    { 3., 4., SY_contact, {"box0", "box1"} },
+
+    //pick
+    { 4., 4., SY_touch, {"R_endeff", "box2"} },
+    { 4., 5., SY_stable, {"R_endeff", "box2"} },
+    { 3.9, 4.5, SY_downUp, {"R_endeff"} },
+
+    //place
+    { 5., 5., SY_touch, {"box1", "box2"} },
+    { 5., -1., SY_stable, {"box1", "box2"} },
+    { 4.9, 5.1, SY_downUp, {"R_endeff"} },
+
+    { 5., 5., SY_forceBalance, {"box2"} },
+    { 5., 5., SY_contact, {"box1", "box2"} },
+
+    { 5., -1., SY_forceBalance, {"box1"} },
+    { 5., -1., SY_contact, {"box0", "box1"} },
+
+    //pick
+    { 4., 4., SY_touch, {"L_endeff", "box3"} },
+    { 4., 5., SY_stable, {"L_endeff", "box3"} },
+    { 3.9, 4.5, SY_downUp, {"L_endeff"} },
+
+    //place
+    { 5., 5., SY_touch, {"box1", "box3"} },
+    { 5., 5., SY_touch, {"box2", "box3"} },
+    { 5., -1., SY_stable, {"box1", "box3"} },
+    { 4.9, 5.1, SY_downUp, {"L_endeff"} },
+
+    { 5., 5., SY_forceBalance, {"box3"} },
+    { 5., 5., SY_contact, {"box1", "box3"} },
+
   };
   komo.setSkeleton(S);
 
@@ -256,18 +338,22 @@ void testWalking(bool keyframesOnly){
 int main(int argc,char** argv){
   rai::initCmdLine(argc,argv);
 
+  rnd.clockSeed();
+
   testPickAndPlace(false);
-  testPickAndPlace(true);
-  testPickAndPush(false);
-  testPickAndPush(true);
-  testPickAndThrow(false);
-  testPickAndThrow(true);
-  testWalkAndPick(false);
-  testWalkAndPick(true);
-  testHandover(false);
-  testHandover(true);
-  testWalking(false);
-  testWalking(true);
+//  testPickAndPlace(true);
+//  testPickAndPush(false);
+//  testPickAndPush(true);
+//  testPickAndThrow(false);
+//  testPickAndThrow(true);
+//  testWalkAndPick(false);
+//  testWalkAndPick(true);
+//  testWalking(false);
+//  testWalking(true);
+//  testHandover(false);
+//  testHandover(true);
+//  testStackAndBalance(false);
+//  testStackAndBalance(true);
 
   return 0;
 }

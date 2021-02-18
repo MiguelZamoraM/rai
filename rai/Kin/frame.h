@@ -136,21 +136,21 @@ struct Frame : NonCopyable {
   void write(std::ostream& os) const;
 
   //-- HIGHER LEVEL USER INTERFACE
-  void setShape(rai::ShapeType shape, const arr& size);
-  void setPose(const rai::Transformation& _X);
-  void setPosition(const arr& pos);
-  void setQuaternion(const arr& quat);
-  void setRelativePosition(const arr& pos);
-  void setRelativeQuaternion(const arr& quat);
-  void setPointCloud(const arr& points, const byteA& colors= {});
-  void setConvexMesh(const arr& points, const byteA& colors= {}, double radius=0.);
-  void setMesh(const arr& points, const byteA& colors= {}, double radius=0.);
-  void setColor(const arr& color);
-  void setJoint(rai::JointType jointType);
-  void setContact(int cont);
-  void setMass(double mass);
-  void addAttribute(const char* key, double value);
-  void setJointState(const arr& q); ///< throws error if this frame is not also a joint, and if q.size() != joint->dim
+  Frame& setShape(rai::ShapeType shape, const arr& size);
+  Frame& setPose(const rai::Transformation& _X);
+  Frame& setPosition(const arr& pos);
+  Frame& setQuaternion(const arr& quat);
+  Frame& setRelativePosition(const arr& pos);
+  Frame& setRelativeQuaternion(const arr& quat);
+  Frame& setPointCloud(const arr& points, const byteA& colors= {});
+  Frame& setConvexMesh(const arr& points, const byteA& colors= {}, double radius=0.);
+  Frame& setMesh(const arr& points, const byteA& colors= {}, double radius=0.);
+  Frame& setColor(const arr& color);
+  Frame& setJoint(rai::JointType jointType);
+  Frame& setContact(int cont);
+  Frame& setMass(double mass);
+  Frame& addAttribute(const char* key, double value);
+  Frame& setJointState(const arr& q); ///< throws error if this frame is not also a joint, and if q.size() != joint->dim
 
   arr getPose() { return ensure_X().getArr7d(); }
   arr getPosition() { return ensure_X().pos.getArr(); }
@@ -189,6 +189,7 @@ struct Joint : NonCopyable {
   double scale=1.;   ///< scaling robot-q = scale * q-vector
 
   Joint* mimic=nullptr; ///< if non-nullptr, this joint's state is identical to another's
+  JointL mimicers;      ///< list of mimicing joints
 
   Vector axis=0;          ///< joint axis (same as X.rot.getX() for standard hinge joints)
   Enum<JointType> type;   ///< joint type
@@ -206,6 +207,7 @@ struct Joint : NonCopyable {
   const Transformation& Q() const; ///< the transformation realized by this joint (i.e. from parent->X to frame->X)
   Frame* from() const { return frame->parent; }
 
+  void setMimic(Joint* j);
   uint qDim();
   void calc_Q_from_q(const arr& q, uint n);
   arr calc_q_from_Q(const Transformation& Q) const;
@@ -214,7 +216,7 @@ struct Joint : NonCopyable {
   arr get_h() const;
 
   bool isPartBreak() {
-    return (type==JT_rigid || type==JT_free) && !mimic;
+    return (type==JT_rigid || type==JT_free); // && !mimic;
 //    return (dim!=1 && !mimic) || type==JT_tau;
   }
 
@@ -274,7 +276,7 @@ struct Shape : NonCopyable, GLDrawer {
   double alpha() { arr& C=mesh().C; if(C.N==4) return C(3); return 1.; }
 
   void createMeshes();
-  shared_ptr<ScalarFunction> functional();
+  shared_ptr<ScalarFunction> functional(bool worldCoordinates=true);
 
   Shape(Frame& f, const Shape* copyShape=nullptr); //new Shape, being added to graph and frame's shape lists
   virtual ~Shape();
