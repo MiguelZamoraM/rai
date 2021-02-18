@@ -1712,8 +1712,8 @@ void KOMO::initWithWaypoints(const arrA& waypoints, uint waypointStepsPerPhase, 
     if(i1-1<T) {
 #ifdef KOMO_PATH_CONFIG
       uintA nonSwitched = getNonSwitchedFrames(timeSlices[k_order+i0], timeSlices[k_order+i1]);
-      arr q0 = pathConfig.getJointState(timeSlices[k_order+i0].sub(nonSwitched), false);
-      arr q1 = pathConfig.getJointState(timeSlices[k_order+i1].sub(nonSwitched), false);
+      arr q0 = pathConfig.getJointState(timeSlices[k_order+i0].sub(nonSwitched));
+      arr q1 = pathConfig.getJointState(timeSlices[k_order+i1].sub(nonSwitched));
 #else
       uintA nonSwitched = getNonSwitchedFrames({configurations(k_order+j), configurations(k_order+i1)});
       arr q0 = configurations(k_order+j)->getJointState(nonSwitched);
@@ -1728,7 +1728,7 @@ void KOMO::initWithWaypoints(const arrA& waypoints, uint waypointStepsPerPhase, 
           q = q0 + phase * (q1-q0);
         }
 #ifdef KOMO_PATH_CONFIG
-        pathConfig.setJointState(q, timeSlices[k_order+j].sub(nonSwitched), false);
+        pathConfig.setJointState(q, timeSlices[k_order+j].sub(nonSwitched));
 #else
         configurations(k_order+j)->setJointState(q, nonSwitched);
 #endif
