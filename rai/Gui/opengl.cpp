@@ -309,7 +309,7 @@ struct GlfwSpinner : Thread {
   void close() {}
 
   void addGL(OpenGL* gl) {
-    bool start=false;
+//    bool start=false;
     mutex.lock(RAI_HERE);
     glwins.append(gl);
 #if 0
@@ -320,17 +320,17 @@ struct GlfwSpinner : Thread {
     glfwSwapBuffers(gl->self->window);
     glfwMakeContextCurrent(nullptr);
 #endif
-    if(glwins.N==1) start=true; //start looping
+//    if(glwins.N==1) start=true; //start looping
     mutex.unlock();
 
 //    if(start) threadLoop(true); //start looping
   }
 
   void delGL(OpenGL* gl) {
-    bool stop=false;
+//    bool stop=false;
     mutex.lock(RAI_HERE);
     glwins.removeValue(gl);
-    if(!glwins.N) stop=true; //stop looping
+//    if(!glwins.N) stop=true; //stop looping
     mutex.unlock();
 
 //    if(stop) threadStop(); //stop looping
@@ -371,9 +371,12 @@ struct GlfwSpinner : Thread {
 
   static void _Close(GLFWwindow* window) {
     OpenGL* gl=(OpenGL*)glfwGetWindowUserPointer(window);
+//    LOG(-1) <<"closing window";
 //      if (!time_to_close)
 //    OpenGL *gl=(OpenGL*)glfwSetWindowShouldClose(window, GLFW_FALSE);
-    gl->WindowStatus(0);
+//    gl->WindowStatus(0);
+    glfwHideWindow(window);
+//    gl->closeWindow();
   }
 
   static void _Scroll(GLFWwindow* window, double xoffset, double yoffset) {
@@ -381,6 +384,10 @@ struct GlfwSpinner : Thread {
     gl->Scroll(0, yoffset);
   }
 
+  static void _Refresh(GLFWwindow* window){
+    OpenGL* gl=(OpenGL*)glfwGetWindowUserPointer(window);
+    gl->postRedrawEvent(true);
+  }
 };
 
 static GlfwSpinner* singletonGlSpinner() {
@@ -418,6 +425,8 @@ void OpenGL::openWindow() {
       glfwSetScrollCallback(self->window, GlfwSpinner::_Scroll);
       glfwSetWindowSizeCallback(self->window, GlfwSpinner::_Resize);
       glfwSetWindowCloseCallback(self->window, GlfwSpinner::_Close);
+      glfwSetWindowRefreshCallback(self->window, GlfwSpinner::_Refresh);
+ 
       glfwSwapInterval(1);
       glfwMakeContextCurrent(nullptr);
     }
@@ -425,6 +434,8 @@ void OpenGL::openWindow() {
     fg->mutex.unlock();
 
     fg->addGL(this);
+  }else{
+    //glfwShowWindow(self->window);
   }
 }
 
@@ -557,9 +568,9 @@ void glStandardLight(void*, OpenGL&) {
 void glStandardScene(void*, OpenGL& gl) {
   glPushAttrib(GL_CURRENT_BIT);
   glStandardLight(nullptr, gl);
-  //  glDrawFloor(10, .8, .8, .8);
-  //  glDrawFloor(10, 1.5, 0.83, .0);
-  glDrawFloor(10., 108./255., 123./255., 139./255.);
+  glDrawFloor(10, .5, .55, .6);
+  // glDrawFloor(10, 1.5, 0.83, .0);
+  // glDrawFloor(10., 108./255., 123./255., 139./255.);
   glDrawAxes(.1);
   glPopAttrib();
 }
@@ -611,8 +622,6 @@ void glColorId(uint id) {
   id2color(rgb, id);
   glColor3ubv(rgb);
 }
-
-extern bool Geo_mesh_drawColors;
 
 void OpenGL::drawId(uint id) {
   if(drawOptions.drawMode_idColor) {
@@ -1709,6 +1718,8 @@ void OpenGL::Draw(int w, int h, rai::Camera* cam, bool callerHasAlreadyLocked) {
   glEnable(GL_BLEND);  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);  glFrontFace(GL_CCW);
   glShadeModel(GL_FLAT);  //glShadeModel(GL_SMOOTH);
+
+  if(drawOptions.pclPointSize>0.) glPointSize(drawOptions.pclPointSize);
 
   //select mode?
   GLint mode;

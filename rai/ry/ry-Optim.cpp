@@ -25,7 +25,7 @@ void init_Optim(pybind11::module& m) {
   .def("evaluate", [](std::shared_ptr<MathematicalProgram>& self, const arr& x){
     arr phi, J;
     self->evaluate(phi, J, x);
-    return std::tuple<arr,arr>(phi, unpack(J));
+    return std::tuple<arr,arr>(phi, J);
   },
   "query the NLP at a point $x$; returns the tuple $(phi,J)$, which is the feature vector and its Jacobian; features define cost terms, sum-of-square (sos) terms, inequalities, and equalities depending on 'getFeatureTypes'"
   )
@@ -100,6 +100,21 @@ void init_Optim(pybind11::module& m) {
       .def("get", &OptBench_InvKin_Endeff::get)
       ;
 
+  pybind11::class_<OptBench_Skeleton_Pick, std::shared_ptr<OptBench_Skeleton_Pick>>(m, "OptBench_Skeleton_Pick")
+      .def(pybind11::init<rai::ArgWord>())
+      .def("get", &OptBench_Skeleton_Pick::get)
+      ;
+
+  pybind11::class_<OptBench_Skeleton_Handover, std::shared_ptr<OptBench_Skeleton_Handover>>(m, "OptBench_Skeleton_Handover")
+      .def(pybind11::init<rai::ArgWord>())
+      .def("get", &OptBench_Skeleton_Handover::get)
+      ;
+
+  pybind11::class_<OptBench_Skeleton_StackAndBalance, std::shared_ptr<OptBench_Skeleton_StackAndBalance>>(m, "OptBench_Skeleton_StackAndBalance")
+      .def(pybind11::init<rai::ArgWord>())
+      .def("get", &OptBench_Skeleton_StackAndBalance::get)
+      ;
+
   //===========================================================================
 
   pybind11::class_<NLP_Solver, std::shared_ptr<NLP_Solver>>(m, "NLP_Solver", "An interface to portfolio of solvers")
@@ -141,6 +156,9 @@ void init_Optim(pybind11::module& m) {
   ENUMVAL(OT, ineq)
   ENUMVAL(OT, eq)
   .export_values();
+
+#undef ENUMVAL
+
 }
 
 #endif

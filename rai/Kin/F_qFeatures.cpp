@@ -17,7 +17,7 @@ F_qItself::F_qItself(bool relative_q0) : relative_q0(relative_q0) {}
 F_qItself::F_qItself(PickMode pickMode, const StringA& picks, const rai::Configuration& C, bool relative_q0)
   : relative_q0(relative_q0) {
   if(pickMode==allActiveJoints) {
-    for(rai::Frame* f: C.frames) if(f->joint && f->joint->active && f->joint->dim!=0){
+    for(rai::Frame* f: C.frames) if(f->joint && f->parent && f->joint->active && f->joint->dim!=0){
       frameIDs.append(f->ID);
       frameIDs.append(f->parent->ID);
     }
@@ -389,6 +389,7 @@ uintA getNonSwitchedFrames(const FrameL& A, const FrameL& B) {
     rai::Frame* f1 = B.elem(i);
     if(!f0->joint || !f1->joint) continue;
     if(f0->joint->type!=f1->joint->type) continue;
+    if(f0->joint->mimic || f1->joint->mimic) continue;
     if(f0->ID - f0->parent->ID != f1->ID-f1->parent->ID) continue; //comparing the DIFFERENCE in IDs between parent and joint
     nonSwitchedFrames.append(i);
   }

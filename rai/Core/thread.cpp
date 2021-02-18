@@ -270,10 +270,7 @@ int Var_base::deAccess(Thread* th) {
   int i;
   if(rwlock.rwCount == -1) { //log a revision after write access
     i = revision++;
-    for(auto* c:callbacks) {
-      //don't call a callback-event for a thread that accessed the variable:
-      if(!th || c->id!=&th->event) c->call()(this);
-    }
+    for(auto* c:callbacks) c->call()(this);
   } else {
     i = revision;
   }
@@ -352,91 +349,6 @@ rai::String CycleTimer::report() {
   rai::String s;
   s.printf("busy=[%5.1f %5.1f] cycle=[%5.1f %5.1f] load=%4.1f%% steps=%i", busyDtMean, busyDtMax, cyclDtMean, cyclDtMax, 100.*busyDtMean/cyclDtMean, steps);
   return s;
-}
-
-//===========================================================================
-//
-// MiniThread
-//
-
-MiniThread::MiniThread(const char* _name) : Signaler(tsIsClosed), name(_name) {
-  if(name.N>14) name.resize(14, true);
-
-  statusLock();
-
-  thread = std::make_unique<std::thread>(&MiniThread::threadMain, this);
-#ifndef RAI_MSVC
-  if(name) pthread_setname_np(thread->native_handle(), name);
-#endif
-
-  status=0;
-  statusUnlock();
-}
-
-MiniThread::~MiniThread() {
-    if (thread){
-        std::cerr << "Call 'threadClose()' in the destructor of the DERIVED class! \
-           That's because the 'virtual table is destroyed' before calling the destructor ~Thread (google 'call virtual function\
-           in destructor') but now the destructor has to call 'threadClose' which triggers a Thread::close(), which is\
-           pure virtual while you're trying to call ~Thread." << endl;
-    exit(1);
-}
-  }
-
-void MiniThread::threadClose(double timeoutForce) {
-//  stopListening();
-  setStatus(tsToClose);
-  if(!thread) { setStatus(tsIsClosed); return; }
-  for(;;) {
-    bool ended = waitForStatusEq(tsIsClosed, 0, .2);
-    if(ended) break;
-    LOG(-1) <<"timeout to end Thread::main of '" <<name <<"'";
-//    if(timeoutForce>0.){
-//      ended = waitForStatusEq(tsEndOfMain, false, timeoutForce);
-//      if(!ended){
-//        threadCancel();
-//        return;
-//      }
-//    }
-  }
-  thread.reset();
-}
-
-void MiniThread::threadCancel() {
-//  stopListening();
-  setStatus(tsToClose);
-  if(!thread) { setStatus(tsIsClosed); return; }
-#ifndef RAI_MSVC
-  int rc;
-  rc = pthread_cancel(thread->native_handle());         if(rc) HALT("pthread_cancel failed with err " <<rc <<" '" <<strerror(rc) <<"'");
-#endif
-  thread->join();
-  thread.reset();
-}
-
-void MiniThread::threadMain() {
-  tid = getpid();
-//  if(verbose>0) cout <<"*** Entering Thread '" <<name <<"'" <<endl;
-  //http://linux.die.net/man/3/setpriority
-  //if(Thread::threadPriority) setRRscheduling(Thread::threadPriority);
-  //if(Thread::threadPriority) setNice(Thread::threadPriority);
-
-  setStatus(1);
-
-  try {
-    main();
-  } catch(const std::exception& ex) {
-    setStatus(tsFAILURE);
-    cerr <<"*** main() of Thread'" <<name <<"'failed: " <<ex.what() <<" -- closing it again" <<endl;
-  } catch(const char* ex) {
-    setStatus(tsFAILURE);
-    cerr <<"*** main() of Thread'" <<name <<"'failed: " <<ex <<" -- closing it again" <<endl;
-  } catch(...) {
-    setStatus(tsFAILURE);
-    cerr <<"*** main() of Thread '" <<name <<"' failed! -- closing it again";
-  }
-
-  setStatus(tsIsClosed);
 }
 
 //=============================================

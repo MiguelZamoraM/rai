@@ -40,6 +40,9 @@ template<class T> pybind11::array_t<T> arr2numpy(const rai::Array<T>& x){
   return pybind11::array_t<T>(x.dim(), x.p);
 }
 
+//explicit specialization for double!
+template<> pybind11::array_t<double> arr2numpy(const rai::Array<double>& x);
+
 template<class T> rai::Array<T> numpy2arr(const pybind11::array_t<T>& X) {
   rai::Array<T> Y;
   uintA dim(X.ndim());
@@ -116,7 +119,7 @@ namespace detail {
     }
 
     /// Conversion part 2 (C++ -> Python): convert rai::Array<T> instance to numpy array
-    static handle cast(rai::String src, return_value_policy, handle) {
+    static handle cast(const rai::String& src, return_value_policy, handle) {
       std::string str(src.p);
       return pybind11::cast(str);
     }
@@ -136,7 +139,7 @@ template <>  struct type_caster<StringA> {
   }
 
   /// Conversion part 2 (C++ -> Python): convert rai::Array<T> instance to numpy array
-  static handle cast(StringA src, return_value_policy /* policy */, handle /* parent */) {
+  static handle cast(const StringA& src, return_value_policy /* policy */, handle /* parent */) {
     std::vector<std::string> strings = I_conv(src);
     return pybind11::cast(strings);
   }
@@ -160,8 +163,8 @@ template <typename T>  struct type_caster<rai::Array<T>> {
   }
 
   /// Conversion part 2 (C++ -> Python): convert rai::Array<T> instance to numpy array
-  static handle cast(rai::Array<T> src, return_value_policy /* policy */, handle /* parent */) {
-    pybind11::array_t<T> ret(src.dim(), src.p);
+  static handle cast(const rai::Array<T>& src, return_value_policy /* policy */, handle /* parent */) {
+    pybind11::array_t<T> ret = arr2numpy(src);
     return ret.release();
   }
 };

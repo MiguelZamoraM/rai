@@ -2697,6 +2697,27 @@ arr SparseMatrix::unsparse() {
   return x;
 }
 
+arr SparseMatrix::getTriplets() const{
+  arr T(Z.N, 3);
+  for(uint k=0; k<Z.N; k++){
+    T.p[3*k+0] = elems.p[2*k];
+    T.p[3*k+1] = elems.p[2*k+1];
+    T.p[3*k+2] = Z.p[k];
+  }
+  return T;
+}
+
+void SparseMatrix::checkConsistency() const {
+  CHECK(Z.isSparse(), "")
+  CHECK_EQ(this, Z.special, "");
+  CHECK_EQ(elems.d0, Z.N, "");
+  CHECK_EQ(elems.d1, 2, "");
+  if(cols.N){
+    CHECK_EQ(rows.N, Z.d0, "");
+    CHECK_EQ(cols.N, Z.d1, "");
+  }
+}
+
 } //namespace rai
 
 void operator -= (rai::SparseMatrix& x, const rai::SparseMatrix& y) { x.add(y, 0, 0, -1.); }
