@@ -762,7 +762,7 @@ double coll_1on3(arr& p2, arr& normal, const arr& pts1, const arr& pts2) {
   //compute normal of tri (plane eq first three parameters)
   arr a=tri[1]-tri[0], b=tri[2]-tri[0];
   normal = crossProduct(b, a);
-  normal /= length(normal);
+  if (length(normal) > 1e-10) normal /= length(normal);
 
   //find plane eq offset parameter
   double d = scalarProduct(normal, tri[0]);

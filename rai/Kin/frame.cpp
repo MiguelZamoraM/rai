@@ -1272,9 +1272,10 @@ void rai::Shape::glDraw(OpenGL& gl) {
 
   //default!
   if(frame.C.orsDrawShapes) {
-    CHECK(_type!=rai::ST_none, "shape type is not initialized");
+    //CHECK(_type!=rai::ST_none, "shape type is not initialized");
 
-    if(_type==rai::ST_marker) {
+    if (_type == rai::ST_none){}
+    else if(_type==rai::ST_marker) {
       if(frame.C.orsDrawMarkers) {
         CHECK_GE(size.N, 1, "need a marker size");
         if(size(0)>0.){
@@ -1286,7 +1287,7 @@ void rai::Shape::glDraw(OpenGL& gl) {
       }
     } else {
       if(!mesh().V.N) {
-        LOG(1) <<"trying to draw empty mesh";
+        //LOG(1) <<"trying to draw empty mesh";
       } else {
         mesh().glDraw(gl);
       }
