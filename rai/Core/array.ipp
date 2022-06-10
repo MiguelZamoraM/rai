@@ -3706,6 +3706,10 @@ template<class T> void rndUniform(rai::Array<T>& a, double low, double high, boo
   if(!add) for(uint i=0; i<a.N; i++) a.p[i] =(T)rnd.uni(low, high);
   else     for(uint i=0; i<a.N; i++) a.p[i]+=(T)rnd.uni(low, high);
 }
+template<class T> void rndUniform2(rai::Array<T>& a, double low, double high, bool add) {
+  if(!add) for(uint i=0; i<a.N; i++) a.p[i] =(T)rnd_.uni(low, high);
+  else     for(uint i=0; i<a.N; i++) a.p[i]+=(T)rnd_.uni(low, high);
+}
 
 template<class T> void rndNegLogUniform(rai::Array<T>& a, double low, double high, bool add) {
   if(!add) for(uint i=0; i<a.N; i++) a.p[i] =(T)(-::log(rnd.uni(low, high)));

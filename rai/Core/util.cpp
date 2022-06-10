@@ -1097,6 +1097,7 @@ rai::String rai::FileToken::absolutePathName() const {
 //
 
 rai::Rnd rnd;
+rai::Rnd rnd_;
 
 uint32_t rai::Rnd::seed(uint32_t n) {
   uint32_t s, c;

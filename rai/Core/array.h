@@ -800,6 +800,7 @@ template<class T> void setMinusSorted(rai::Array<T>& x, const rai::Array<T>& y,
 template<class T> uint numberSharedElements(const rai::Array<T>& x, const rai::Array<T>& y);
 template<class T> void rndInteger(rai::Array<T>& a, int low=0, int high=1, bool add=false);
 template<class T> void rndUniform(rai::Array<T>& a, double low=0., double high=1., bool add=false);
+template<class T> void rndUniform2(rai::Array<T>& a, double low=0., double high=1., bool add=false);
 template<class T> void rndNegLogUniform(rai::Array<T>& a, double low=0., double high=1., bool add=false);
 template<class T> void rndGauss(rai::Array<T>& a, double stdDev=1., bool add=false);
 //template<class T> void rndGauss(rai::Array<T>& a, bool add=false);

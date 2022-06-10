@@ -1787,7 +1787,7 @@ void KOMO::run_prepare(double addInitializationNoise, const bool uniform) {
         arr sample(dim);
 
         // sample uniformly between 0,1
-        rndUniform(sample,0,1,false);
+        rndUniform2(sample,0,1,false);
 
         // scale sample
         for (uint i=0; i<sample.d0; ++i){
@@ -1812,7 +1812,7 @@ void KOMO::run_prepare(double addInitializationNoise, const bool uniform) {
         arr sample(dim);
 
         // sample uniformly between 0,1
-        rndUniform(sample,0,1,false);
+        rndUniform2(sample,0,1,false);
 
         // scale sample
         for (uint i=0; i<sample.d0; ++i){
