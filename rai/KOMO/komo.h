@@ -39,6 +39,7 @@ enum SkeletonSymbol {
   SY_free, //old
 
   //pose constraints:
+  SY_positionEq,
   SY_poseEq,
   SY_stableRelPose,
   SY_stablePose,
@@ -279,7 +280,7 @@ struct KOMO : NonCopyable {
   void reset();                                      ///< reset the dual variables and feature value buffers (always needed when adding/changing objectives before continuing an optimization)
 
   //advanced
-  void run_prepare(double addInitializationNoise);   ///< ensure the configurations are setup, decision variable is initialized, and noise added (if >0)
+  void run_prepare(double addInitializationNoise, const bool uniform=false);   ///< ensure the configurations are setup, decision variable is initialized, and noise added (if >0)
   void run(OptOptions options=NOOPT);          ///< run the solver iterations (configurations and decision variable needs to be setup before)
   void setSpline(uint splineT);      ///< optimize B-spline nodes instead of the path; splineT specifies the time steps per node
 

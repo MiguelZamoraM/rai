@@ -100,7 +100,7 @@ struct Configuration : GLDrawer {
   Frame* addFrame(const char* name, const char* parent=nullptr, const char* args=nullptr);
   Frame* addFile(const char* filename);
   void addAssimp(const char* filename);
-  void addCopies(const FrameL& F, const ForceExchangeL& _forces);
+  void addCopies(const FrameL& F, const ForceExchangeL& _forces, const bool deep=false);
   void addConfiguration(const Configuration& C){ addCopies(C.frames, C.forces); } ///< same as addCopies() with C.frames and C.forces
 
   /// @name get frames

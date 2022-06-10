@@ -291,7 +291,7 @@ Frame* Configuration::addObject(const char* name, const char* parent, ShapeType 
 #endif
 
 /// add copies of all given frames and forces, which can be from another Configuration -> \ref frames array becomes sliced! (a matrix)
-void Configuration::addCopies(const FrameL& F, const ForceExchangeL& _forces) {
+void Configuration::addCopies(const FrameL& F, const ForceExchangeL& _forces, const bool deep) {
   //prepare an index FId -> thisId
   uint maxId=0;
   for(Frame* f:F) if(f->ID>maxId) maxId=f->ID;
@@ -300,7 +300,7 @@ void Configuration::addCopies(const FrameL& F, const ForceExchangeL& _forces) {
 
   //create new copied frames
   for(Frame* f:F) {
-    Frame* f_new = new Frame(*this, f);
+    Frame* f_new = new Frame(*this, f, deep);
     FId2thisId(f->ID) = f_new->ID;
 
     //convert constant joints to mimic joints

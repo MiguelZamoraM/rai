@@ -26,7 +26,7 @@ struct Joint;
 struct Shape;
 struct Inertia;
 struct ForceExchange;
-enum JointType { JT_none=-1, JT_hingeX=0, JT_hingeY=1, JT_hingeZ=2, JT_transX=3, JT_transY=4, JT_transZ=5, JT_transXY=6, JT_trans3=7, JT_transXYPhi=8, JT_universal=9, JT_rigid=10, JT_quatBall=11, JT_phiTransXY=12, JT_XBall, JT_free, JT_tau };
+enum JointType { JT_none=0, JT_hingeX, JT_hingeY, JT_hingeZ, JT_transX, JT_transY, JT_transZ, JT_transXY, JT_trans3, JT_transXYPhi, JT_universal, JT_rigid, JT_quatBall, JT_phiTransXY, JT_XBall, JT_free, JT_tau };
 enum BodyType  { BT_none=-1, BT_dynamic=0, BT_kinematic, BT_static };
 }
 
@@ -95,7 +95,7 @@ struct Frame : NonCopyable {
   Inertia* inertia=nullptr;      ///< this frame has inertia (is a mass)
   Array<ForceExchange*> forces;  ///< this frame exchanges forces with other frames
 
-  Frame(Configuration& _K, const Frame* copyFrame=nullptr);
+  Frame(Configuration& _K, const Frame* copyFrame=nullptr, const bool deep=false);
   Frame(Frame* _parent);
   ~Frame();
 
@@ -278,7 +278,7 @@ struct Shape : NonCopyable, GLDrawer {
   void createMeshes();
   shared_ptr<ScalarFunction> functional(bool worldCoordinates=true);
 
-  Shape(Frame& f, const Shape* copyShape=nullptr); //new Shape, being added to graph and frame's shape lists
+  Shape(Frame& f, const Shape* copyShape=nullptr, const bool deep=false); //new Shape, being added to graph and frame's shape lists
   virtual ~Shape();
 
   bool canCollideWith(const Frame* f) const {

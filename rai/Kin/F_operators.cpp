@@ -20,7 +20,7 @@ void F_Max::phi(arr& y, arr& J, const rai::Configuration& G) {
 
 //===========================================================================
 
-void F_Norm::phi(arr& y, arr& J, const rai::Configuration& G) {
+void F_Norm::phi2(arr& y, arr& J, const rai::Configuration& G) {
   f->__phi(y, J, G);
   double l = sqrt(sumOfSqr(y));
   if(!!J) J = ~(y/l)*J;

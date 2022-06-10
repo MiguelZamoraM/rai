@@ -139,7 +139,7 @@ rai::Frame* rai::KinematicSwitch::apply(FrameL& frames) {
 #if 0 //THIS is the standard version that worked with pnp LGP tests - but is a problem for the crawler
     to = to->getUpwardLink(NoTransformation, false);
     if(to->parent) to->unLink();
-#elif 1 //THIS is the new STANDARD! (was the version that works for the crawler; works also for pnp LGP test - but not when picking link-shapes only!)
+#elif 0 //THIS is the new STANDARD! (was the version that works for the crawler; works also for pnp LGP test - but not when picking link-shapes only!)
     to->C.reconfigureRoot(to, true);
 #else
     if(to->parent) to->unLink();
@@ -218,7 +218,8 @@ rai::Frame* rai::KinematicSwitch::apply(FrameL& frames) {
 
   if(symbol==SW_addContact) {
     CHECK_EQ(jointType, JT_none, "");
-    new ForceExchange(*from, *to, FXT_poa);
+    //new ForceExchange(*from, *to, FXT_poa);
+    new ForceExchange(*from, *to, FXT_torque);
     return from;
   }
 

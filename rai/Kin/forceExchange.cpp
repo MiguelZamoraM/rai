@@ -39,7 +39,8 @@ void rai::ForceExchange::setZero() {
   if(type==FXT_poa){
     poa = .5*a.getPosition() + .5*b.getPosition();
   }else{
-    poa = b.getPosition();
+    poa = .5*a.getPosition() + .5*b.getPosition();
+    //poa = b.getPosition();
   }
   if(__coll) { delete __coll; __coll=0; }
 }
@@ -50,7 +51,8 @@ void rai::ForceExchange::calc_F_from_q(const arr& q, uint n) {
     force = q({n+3, n+5});
     torque.resize(3).setZero();
   }else if(type==FXT_torque){
-    poa = b.getPosition();
+    //poa = a.getPosition();
+    poa = .5*a.getPosition() + .5*b.getPosition();
     force = q({n, n+2});
     torque = q({n+3, n+5});
   }
@@ -81,7 +83,7 @@ void rai::ForceExchange::kinPOA(arr& y, arr& J) const {
     if(!!J) for(uint i=0; i<3; i++) J.elem(i, qIndex+0+i) = 1.;
   }else if(type==FXT_torque){
     //use b as the POA!!
-    b.C.kinematicsPos(y, J, &b);
+    a.C.kinematicsPos(y, J, &a);
   }
 }
 
@@ -133,7 +135,8 @@ arr gnuplot(const double x){
 void rai::ForceExchange::glDraw(OpenGL& gl) {
   if(type==FXT_poa){
   }else if(type==FXT_torque){
-    poa = b.getPosition();
+    poa = .5*a.getPosition() + .5*b.getPosition();
+    //poa = a.getPosition();
   }
   double scale = 1.;
 

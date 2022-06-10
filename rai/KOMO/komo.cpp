@@ -563,12 +563,13 @@ void KOMO::addContact_stick(double startTime, double endTime, const char* from, 
   addObjective({startTime, endTime}, make_shared<F_fex_POAContactDistances>(), {from, to}, OT_ineq, {1e1});
 #endif
   addObjective({startTime, endTime}, FS_pairCollision_negScalar, {from, to}, OT_eq, {1e1});
-  addObjective({startTime, endTime}, make_shared<F_fex_ForceIsPositive>(), {from, to}, OT_ineq, {1e1});
+  //addObjective({startTime, endTime}, make_shared<F_fex_ForceIsPositive>(), {from, to}, OT_ineq, {1e1});
   addObjective({startTime, endTime}, make_shared<F_fex_POAzeroRelVel>(), {from, to}, OT_eq, {1e0}, NoArr, 1, +1, +1);
 
   //regularization
 //  addObjective({startTime, endTime}, make_shared<TM_Contact_Force>(world, from, to), OT_sos, {1e-2}, NoArr, 2, +2, 0);
   addObjective({startTime, endTime}, make_shared<F_fex_Force>(), {from, to}, OT_sos, {1e-4});
+  addObjective({startTime, endTime}, make_shared<F_fex_Torque>(), {from, to}, OT_sos, {1e-1});
   addObjective({startTime, endTime}, make_shared<F_fex_POA>(), {from, to}, OT_sos, {1e-2}, NoArr, 2, +2, +0);
   addObjective({startTime, endTime}, make_shared<F_fex_POA>(), {from, to}, OT_sos, {1e-2}, NoArr, 1, +1, +0);
 }
@@ -1236,7 +1237,7 @@ void KOMO::setSkeleton(const Skeleton& S) {
       case SY_none:       HALT("should not be here");  break;
       case SY_end: break; //explicit redundant symbol, e.g. to mark the end of a skeleton
       case SY_initial: case SY_identical: case SY_noCollision:    break;
-      case SY_touch:      {addObjective({s.phase0, s.phase1}, FS_distance, {s.frames(0), s.frames(1)}, OT_eq, {1e2}); addObjective({s.phase0, s.phase1}, FS_positionDiff, s.frames, OT_sos, {1e1}); break;}
+      case SY_touch:      {addObjective({s.phase0, s.phase1}, FS_distance, {s.frames(0), s.frames(1)}, OT_eq, {1e1}); /*addObjective({s.phase0, s.phase1}, FS_positionDiff, s.frames, OT_sos, {1e1});*/ break;}
       case SY_above:      addObjective({s.phase0, s.phase1}, FS_aboveBox, {s.frames(0), s.frames(1)}, OT_ineq, {1e1});  break;
       case SY_inside:     addObjective({s.phase0, s.phase1}, FS_insideBox, {s.frames(0), s.frames(1)}, OT_ineq, {1e1});  break;
 //      case SY_inside:     addObjective({s.phase0, s.phase1}, make_shared<TM_InsideLine>(world, s.frames(0), s.frames(1)), OT_ineq, {1e1});  break;
@@ -1290,6 +1291,7 @@ void KOMO::setSkeleton(const Skeleton& S) {
       case SY_stableRelPose: addObjective({s.phase0, s.phase1+1.}, FS_poseRel, s.frames, OT_eq, {1e2}, {}, 1);  break;
       case SY_stablePose:  addObjective({s.phase0, s.phase1+1.}, FS_pose, s.frames, OT_eq, {1e2}, {}, 1);  break;
       case SY_poseEq: addObjective({s.phase0, s.phase1}, FS_poseDiff, s.frames, OT_eq, {1e2});  break;
+      case SY_positionEq: addObjective({s.phase0, s.phase1}, FS_positionDiff, s.frames, OT_eq, {1e2});  break;
 
       case SY_downUp:{
         if(k_order>=2){
@@ -1556,7 +1558,7 @@ void KOMO_ext::setMoveTo(Configuration& world, Frame& endeff, Frame& target, byt
 }
 
 void KOMO::setConfiguration(int t, const arr& q) {
-  pathConfig.setJointStateSlice(q, t, world.getJointIDs());
+  pathConfig.setJointStateSlice(q, t+k_order, world.getJointIDs());
 }
 
 void KOMO::setConfiguration_X(int t, const arr& X) {
@@ -1760,7 +1762,7 @@ void KOMO::optimize(double addInitializationNoise, const OptOptions options) {
   run(options);
 }
 
-void KOMO::run_prepare(double addInitializationNoise) {
+void KOMO::run_prepare(double addInitializationNoise, const bool uniform) {
   //ensure the configurations are setup
 #ifndef KOMO_PATH_CONFIG
   if(!configurations.N) setupConfigurations();
@@ -1776,27 +1778,59 @@ void KOMO::run_prepare(double addInitializationNoise) {
 
   //add noise
   if(addInitializationNoise>0.) {
-    //rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+    if (uniform){
+      const bool keyframeRnd = false;
+      if (keyframeRnd){
+        const arr limits = world.getLimits();
 
-    const arr limits = pathConfig.getLimits();
-    const uint dim = limits.dim(0);
-    arr sample(dim);
+        const uint dim = limits.dim(0);
+        arr sample(dim);
 
-    // sample uniformly between 0,1
-    rndUniform(sample,0,1,false);
+        // sample uniformly between 0,1
+        rndUniform(sample,0,1,false);
 
-    // scale sample
-    for (uint i=0; i<sample.d0; ++i){
-      if(limits(i,1) > limits(i,0)){
-        sample(i) = limits(i, 0) + sample(i) * (limits(i, 1) - limits(i, 0));
+        // scale sample
+        for (uint i=0; i<sample.d0; ++i){
+          if(limits(i,1) > limits(i,0)){
+            sample(i) = limits(i, 0) + sample(i) * (limits(i, 1) - limits(i, 0));
+          }
+          else {
+            // default: [-5, 5]
+            sample(i) = sample(i) * 10 - 5;
+          }
+        }
+
+        for (uint i=0; i<T; ++i){
+          for (uint j=0; j<sample.d0; ++j){
+            x(i*sample.d0+j) = sample(j);
+          }
+        }
       }
       else {
-        // default: [-5, 5]
-        sample(i) = sample(i) * 10 - 5;
+        const arr limits = pathConfig.getLimits();
+        const uint dim = limits.dim(0);
+        arr sample(dim);
+
+        // sample uniformly between 0,1
+        rndUniform(sample,0,1,false);
+
+        // scale sample
+        for (uint i=0; i<sample.d0; ++i){
+          if(limits(i,1) > limits(i,0)){
+            sample(i) = limits(i, 0) + sample(i) * (limits(i, 1) - limits(i, 0));
+          }
+          else {
+            // default: [-5, 5]
+            sample(i) = sample(i) * 10 - 5;
+          }
+        }
+
+        x = sample();
       }
     }
-
-    x = sample();
+    else{
+      rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+    }
   }
 }
 
@@ -3337,6 +3371,7 @@ template<> const char* rai::Enum<SkeletonSymbol>::names []= {
   "initial",
   "free",
 
+  "positionEq",
   "poseEq",
   "stableRelPose",
   "stablePose",

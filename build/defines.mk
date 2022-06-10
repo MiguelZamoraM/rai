@@ -100,7 +100,7 @@ endif
 
 ifeq ($(OMPL),1)
 CXXFLAGS += -DRAI_OMPL
-CPATHS  += /usr/local/include/ompl-1.6/
+CPATHS  += /usr/local/include/ompl-1.5/
 endif
 
 ifeq ($(CUDA),1)

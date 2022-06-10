@@ -155,6 +155,13 @@ void F_fex_Force::phi2(arr& y, arr& J, const FrameL& F) {
   ex->kinForce(y, J);
 }
 
+void F_fex_Torque::phi2(arr& y, arr& J, const FrameL& F) {
+  if(order>0){  Feature::phi2(y, J, F);  return;  }
+  CHECK_EQ(F.N, 2, "");
+  rai::ForceExchange* ex = getContact(F.elem(0), F.elem(1));
+  ex->kinTorque(y, J);
+}
+
 void F_fex_Wrench::phi2(arr& y, arr& J, const FrameL& F){
   if(order>0){  Feature::phi2(y, J, F);  return;  }
   CHECK_EQ(F.N, 2, "");
@@ -216,9 +223,12 @@ void F_TotalForce::phi2(arr& y, arr& J, const FrameL& F) {
   FrameL linkF;
   linkF.append(a);
   a->getRigidSubFrames(linkF);
+  //std::cout << std::endl << a->name << std::endl;
   for(rai::Frame* f:linkF) {
+    //std::cout << f->name << std::endl;
     for(rai::ForceExchange* ex:f->forces) {
       contacts.append(ex);
+      //std::cout << ex->a.name << " " << ex->b.name << std::endl;
       signs.append(ex->sign(f));
     }
   }

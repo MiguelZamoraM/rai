@@ -20,7 +20,7 @@
 //===========================================================================
 
 template<> const char* rai::Enum<rai::JointType>::names []= {
-  "hingeX", "hingeY", "hingeZ", "transX", "transY", "transZ", "transXY", "trans3", "transXYPhi", "universal", "rigid", "quatBall", "phiTransXY", "XBall", "free", "tau", nullptr
+  "none", "hingeX", "hingeY", "hingeZ", "transX", "transY", "transZ", "transXY", "trans3", "transXYPhi", "universal", "rigid", "quatBall", "phiTransXY", "XBall", "free", "tau", nullptr
 };
 
 template<> const char* rai::Enum<rai::BodyType>::names []= {
@@ -45,7 +45,7 @@ void rai::Transformation_Qtoken::operator=(const rai::Transformation& _Q) { f.Q=
 
 bool rai_Kin_frame_ignoreQuatNormalizationWarning = true;
 
-rai::Frame::Frame(Configuration& _K, const Frame* copyFrame)
+rai::Frame::Frame(Configuration& _K, const Frame* copyFrame, const bool deep)
   : C(_K) {
 
   ID=C.frames.N;
@@ -55,7 +55,7 @@ rai::Frame::Frame(Configuration& _K, const Frame* copyFrame)
     name=f.name; Q=f.Q; X=f.X; _state_X_isGood=f._state_X_isGood; tau=f.tau; ats=f.ats;
     //we cannot copy link! because we can't know if the frames already exist. Configuration::copy copies the rel's !!
     if(copyFrame->joint) new Joint(*this, copyFrame->joint);
-    if(copyFrame->shape) new Shape(*this, copyFrame->shape);
+    if(copyFrame->shape) new Shape(*this, copyFrame->shape, deep);
     if(copyFrame->inertia) new Inertia(*this, copyFrame->inertia);
   }
 }
@@ -606,7 +606,7 @@ rai::Joint::Joint(Frame& f, Joint* copyJoint)
     active=copyJoint->active;
 
     if(copyJoint->mimic){
-      setMimic(frame->C.frames.elem(copyJoint->mimic->frame->ID)->joint);
+      //setMimic(frame->C.frames.elem(copyJoint->mimic->frame->ID)->joint);
     }
 
     if(copyJoint->uncertainty) {
@@ -1138,14 +1138,21 @@ void rai::Joint::write(std::ostream& os) const {
 // Shape
 //
 
-rai::Shape::Shape(Frame& f, const Shape* copyShape)
+rai::Shape::Shape(Frame& f, const Shape* copyShape, const bool deep)
   : frame(f), _type(ST_none) {
 
   CHECK(!frame.shape, "this frame ('" <<frame.name <<"') already has a shape attached");
   frame.shape = this;
   if(copyShape) {
     const Shape& s = *copyShape;
-    if(s._mesh) _mesh = s._mesh; //shallow shared_ptr copy!
+    if(s._mesh) {
+      if (deep){
+        _mesh = std::make_shared<Mesh>(*(s._mesh)); 
+      }
+      else {
+        _mesh = s._mesh; //shallow shared_ptr copy!
+      }
+    }
     if(s._sscCore) _sscCore = s._sscCore; //shallow shared_ptr copy!
     _type = s._type;
     size = s.size;

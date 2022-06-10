@@ -62,9 +62,12 @@ void Objective::setCostSpecs(const arr& times, int stepsPerPhase, uint T,
 }
 
 bool Objective::isActive(uint t) {
-  if(!configs.N) return false;
-  CHECK_EQ(configs.nd, 1, "variables are not time indexed (tuples for dense problem instead)");
-  return (configs.N>t && configs(t));
+  std::cout << name << std::endl;
+  std::cout << configs << std::endl <<std::endl;
+  //if(!configs.N) return false;
+  //CHECK_EQ(configs.nd, 1, "variables are not time indexed (tuples for dense problem instead)");
+  //return (configs.N>t && configs(t));
+  return max(configs) > t;
 }
 
 void Objective::write(std::ostream& os) const {

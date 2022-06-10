@@ -30,8 +30,8 @@ struct F_Norm : Feature {
 
   F_Norm(const ptr<Feature>& f) : f(f) {}
 
-  virtual void phi(arr& y, arr& J, const rai::Configuration& G);
-  virtual uint dim_phi(const rai::Configuration& G) { return 1; }
+  virtual void phi2(arr& y, arr& J, const rai::Configuration& G);
+  virtual uint dim_phi2(const rai::Configuration& G) { return 1; }
   virtual rai::String shortTag(const rai::Configuration& G) { return STRING("Norm:"<<f->shortTag((G))); }
 };
 

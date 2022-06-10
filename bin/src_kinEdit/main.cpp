@@ -65,7 +65,7 @@ int main(int argc,char **argv){
   C.checkConsistency();
   C.sortFrames();
 
-  arr pos(0, 3);
+  /*arr pos(0, 3);
   for (auto f: C.frames){
     if (!f->shape){continue;}
     auto c = f->getShape()._mesh->center();
@@ -86,7 +86,7 @@ int main(int argc,char **argv){
   for (auto *f: C.frames){
     if (f->shape) f->getShape().mesh().scale(scale);
     f->setPosition(f->getPosition()*scale);
-  }
+  }*/
 
   if(rai::checkParameter<bool>("writeMeshes")){
     rai::system("mkdir -p meshes");
