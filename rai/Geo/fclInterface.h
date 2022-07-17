@@ -10,6 +10,8 @@
 
 #include "mesh.h"
 
+#include <unordered_set>
+
 namespace fcl {
 class CollisionObject;
 class DynamicAABBTreeCollisionManager;
@@ -27,10 +29,24 @@ struct FclInterface {
   uintA collisions; //return values!
   arr X_lastQuery;  //memory to check whether an object has moved in consecutive queries
 
+  bool stopEarly{false};
+
+  // hashmap
+  std::string key(uint a, uint b){
+    if (a < b){
+      return std::to_string(a) + "," + std::to_string(b);
+    }
+
+    return std::to_string(b) + "," + std::to_string(a);
+  }
+  std::unordered_set<std::string> deactivatedPairs;
+
   FclInterface(const Array<ptr<Mesh>>& geometries, double _cutoff=0.);
   ~FclInterface();
 
   void step(const arr& X);
+
+  void deactivatePairs(const uintA& collisionExcludePairIDs);
 
 private: //called by collision callback
   void addCollision(void* userData1, void* userData2);

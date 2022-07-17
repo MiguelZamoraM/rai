@@ -88,6 +88,12 @@ void rai::FclInterface::step(const arr& X) {
   X_lastQuery = X;
 }
 
+void rai::FclInterface::deactivatePairs(const uintA& collisionExcludePairIDs){
+  for (uint i=0; i<collisionExcludePairIDs.d0; ++i){
+    deactivatedPairs.insert(key(collisionExcludePairIDs(i, 0), collisionExcludePairIDs(i, 1)));
+  }
+}
+
 void rai::FclInterface::addCollision(void* userData1, void* userData2) {
   uint a = (long int)userData1;
   uint b = (long int)userData2;
@@ -98,6 +104,17 @@ void rai::FclInterface::addCollision(void* userData1, void* userData2) {
 
 bool rai::FclInterface::BroadphaseCallback(fcl::CollisionObject* o1, fcl::CollisionObject* o2, void* cdata_) {
   rai::FclInterface* self = static_cast<rai::FclInterface*>(cdata_);
+
+  // this does not work at the moment
+  if (self->stopEarly && self->collisions.d0 > 0){
+    return false;
+  }
+
+  auto pair = self->key((long int)o1->getUserData(), (long int)o2->getUserData());
+  if (self->deactivatedPairs.count(pair) > 0){
+    //std::cout << self->deactivatedPairs << std::endl;
+    return false;
+  }
 
   if(self->cutoff==0.) { //fine boolean collision query
     fcl::CollisionRequest request;
