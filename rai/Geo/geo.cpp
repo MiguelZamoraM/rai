@@ -1419,6 +1419,16 @@ arr Transformation::getArr7d() const {
   return t;
 }
 
+void Transformation::getArr7dInplace(arr& out) const{
+  out.p[0]=pos.x;
+  out.p[1]=pos.y;
+  out.p[2]=pos.z;
+  out.p[3]=rot.w;
+  out.p[4]=rot.x;
+  out.p[5]=rot.y;
+  out.p[6]=rot.z;
+}
+
 arr Transformation::getWrenchTransform() const {
   arr z(3, 3);  z.setZero();
   arr r = skew(pos.getArr()); //(3, 3);  Featherstone::skew(r, &pos.x); skew pos

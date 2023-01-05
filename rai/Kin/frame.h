@@ -73,9 +73,9 @@ struct Frame : NonCopyable {
   Frame* parent=nullptr;   ///< parent frame
   FrameL children;         ///< list of children
 
+  Transformation X=0;        ///< frame's absolute pose
  protected:
   Transformation Q=0;        ///< relative transform to parent
-  Transformation X=0;        ///< frame's absolute pose
   //data structure state (lazy evaluation leave the state structure out of sync)
   bool _state_X_isGood=true; // X represents the current state
   void _state_setXBadinBranch();
@@ -153,6 +153,7 @@ struct Frame : NonCopyable {
   Frame& setJointState(const arr& q); ///< throws error if this frame is not also a joint, and if q.size() != joint->dim
 
   arr getPose() { return ensure_X().getArr7d(); }
+  void getPoseInplace(arr& out) { ensure_X().getArr7dInplace(out); }
   arr getPosition() { return ensure_X().pos.getArr(); }
   arr getQuaternion() { return ensure_X().rot.getArr4d(); }
   arr getRotationMatrix() { return ensure_X().rot.getArr(); }

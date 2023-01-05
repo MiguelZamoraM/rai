@@ -18,7 +18,7 @@ LIBS += -ljsoncpp
 endif
 
 ifeq ($(OPENMP),1)
-CXXFLAGS += -fopenmp -DOPENMP
+CXXFLAGS += -fopenmp -DOPENMP -fno-omit-frame-pointer
 endif
 
 ifeq ($(PYBIND),1)
@@ -344,8 +344,8 @@ endif
 
 ifeq ($(EIGEN),1)
 DEPEND_UBUNTU += libeigen3-dev
-CXXFLAGS += -DRAI_EIGEN -fopenmp
-LDFLAGS += -fopenmp
+CXXFLAGS += -DRAI_EIGEN -fopenmp -fno-omit-frame-pointer
+LDFLAGS += -fopenmp -fno-omit-frame-pointer
 CPATH := $(CPATH):/usr/include/eigen3
 endif
 

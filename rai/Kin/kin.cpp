@@ -116,6 +116,7 @@ struct sConfiguration {
   shared_ptr<ConfigurationViewer> viewer;
   shared_ptr<SwiftInterface> swift;
   shared_ptr<FclInterface> fcl;
+  shared_ptr<SplitFclInterface> splitfcl;
   unique_ptr<PhysXInterface> physx;
   unique_ptr<OdeInterface> ode;
   unique_ptr<FeatherstoneInterface> fs;
@@ -503,7 +504,7 @@ arr Configuration::getJointState(const FrameL& joints) const {
 arr Configuration::getFrameState(const FrameL& F) const {
   arr X(F.N, 7);
   for(uint i=0; i<X.d0; i++) {
-    X[i] = F.elem(i)->ensure_X().getArr7d();
+    F.elem(i)->ensure_X().getArr7dInplace(X[i]());
   }
   return X;
 }
@@ -1776,6 +1777,37 @@ std::shared_ptr<SwiftInterface> Configuration::swift() {
   return self->swift;
 }
 
+void Configuration::InitSplitFcl(const std::vector<std::size_t>& robot_ids, const std::vector<std::size_t>& obs_ids, const  std::vector<std::size_t>& env_ids){
+  Array<ptr<Mesh>> geometries(frames.N);
+  for(Frame* f:frames) {
+    if(f->shape && f->shape->cont) {
+      if(!f->shape->mesh().V.N) f->shape->createMeshes();
+      geometries(f->ID) = f->shape->_mesh;
+    }
+  }
+  self->splitfcl = make_shared<SplitFclInterface>();
+
+  const auto r = std::unordered_set<std::size_t>(robot_ids.begin(), robot_ids.end());
+  const auto o = std::unordered_set<std::size_t>(obs_ids.begin(), obs_ids.end());
+  const auto e = std::unordered_set<std::size_t>(env_ids.begin(), env_ids.end());
+
+  self->splitfcl->Init(geometries, r, o, e);
+}
+
+void Configuration::collideSplitFcl(const bool robot, const bool robot_obs, const bool obs_env){
+  const arr X = getFrameState();
+  self->splitfcl->step(X, robot, robot_obs, obs_env);
+
+  proxies.clear();
+  addProxies(self->splitfcl->collisions);
+
+  _state_proxies_isGood=true;
+}
+shared_ptr<SplitFclInterface> Configuration::splitfcl(){
+
+  return self->splitfcl;
+}
+
 std::shared_ptr<FclInterface> Configuration::fcl() {
   if(!self->fcl) {
     Array<ptr<Mesh>> geometries(frames.N);
@@ -1918,7 +1950,11 @@ void Configuration::stepSwift() {
 
 void Configuration::stepFcl() {
   //-- get the frame state of collision objects
-  arr X = getFrameState();
+  const arr X = getFrameState();
+  stepFclUsingFramestate(X);
+}
+
+void Configuration::stepFclUsingFramestate(const arr& X){
   //-- step fcl
   fcl()->step(X);
   //-- add as proxies

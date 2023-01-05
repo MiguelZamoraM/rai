@@ -96,7 +96,7 @@ LPATHS	+= $(BASE)/lib $(HOME)/opt/lib /usr/local/lib
 LIBS += -lrt
 SHAREFLAG = -shared #-Wl,--warn-unresolved-symbols #-Wl,--no-allow-shlib-undefined
 
-CXXFLAGS += -Wno-terminate -Wno-class-memaccess -fPIC
+CXXFLAGS += -Wno-terminate -Wno-class-memaccess -fPIC -fno-omit-frame-pointer
 CFLAGS += -fPIC
 
 ifndef RAI_NO_CXX11
@@ -109,7 +109,7 @@ OPTIM = debug
 endif
 
 ifeq ($(OPTIM),debug)
-CXXFLAGS := -g -Wall $(CXXFLAGS)#-Wno-int-to-pointer-cast#-Wno-invalid-offsetof
+CXXFLAGS := -g -Wall -fno-omit-frame-pointer $(CXXFLAGS)#-Wno-int-to-pointer-cast#-Wno-invalid-offsetof
 endif
 ifeq ($(OPTIM),fast_debug)
 CXXFLAGS := -g -O3 -Wall $(CXXFLAGS)

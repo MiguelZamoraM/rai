@@ -22,14 +22,14 @@ struct sANN {
 };
 
 ANN::ANN() {
-  bufferSize = 1 <<10;
+  bufferSize = 10;//1 <<10;
   self = make_unique<sANN>();
   self->tree = 0;
   self->treeSize = 0;
 }
 
 ANN::ANN(const ANN& ann) {
-  bufferSize = 1 <<10;
+  bufferSize = 10;//1 <<10;
   self = make_unique<sANN>();
   self->tree = 0;
   self->treeSize = 0;
@@ -62,7 +62,7 @@ void ANN::calculate() {
   if(self->treeSize == X.d0) return;
   self->clear();
   X.getCarray(self->cpointers);
-  self->tree = new ANNkd_tree(self->cpointers.p, X.d0, X.d1);
+  self->tree = new ANNkd_tree(self->cpointers.p, X.d0, X.d1, 5);
   self->treeSize = X.d0;
 }
 

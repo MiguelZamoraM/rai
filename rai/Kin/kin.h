@@ -33,6 +33,7 @@ struct Configuration;
 struct KinematicSwitch;
 
 struct FclInterface;
+struct SplitFclInterface;
 struct ConfigurationViewer;
 
 } // namespace rai
@@ -57,6 +58,8 @@ namespace rai {
 /// data structure to store a kinematic/physical situation (lists of frames (with joints, shapes, inertias), forces & proxies)
 struct Configuration : GLDrawer {
   unique_ptr<struct sConfiguration> self;
+
+  double get_frame_state_time{0.};
 
   //-- fundamental structure
   FrameL frames;     ///< list of coordinate frames, with shapes, joints, inertias attached
@@ -225,6 +228,11 @@ struct Configuration : GLDrawer {
   void copyProxies(const ProxyA& _proxies);
   void addProxies(const uintA& collisionPairs);
 
+  // custom fcl
+  void InitSplitFcl(const std::vector<std::size_t>& robot_ids, const std::vector<std::size_t>& obs_ids, const  std::vector<std::size_t>& env_ids);
+  void collideSplitFcl(const bool robot, const bool robot_obs, const bool obs_env);
+  shared_ptr<SplitFclInterface> splitfcl();
+
   /// @name extensions on demand
   shared_ptr<ConfigurationViewer>& gl(const char* window_title=nullptr, bool offscreen=false);
   shared_ptr<SwiftInterface> swift();
@@ -241,6 +249,7 @@ struct Configuration : GLDrawer {
   void glClose();
   void stepSwift();
   void stepFcl();
+  void stepFclUsingFramestate(const arr& X);
   void stepPhysx(double tau);
   void stepOde(double tau);
   void stepDynamics(arr& qdot, const arr& u_control, double tau, double dynamicNoise = 0.0, bool gravity = true);
