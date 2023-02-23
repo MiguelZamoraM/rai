@@ -2514,8 +2514,9 @@ template<class T> T maxDiff(const rai::Array<T>& v, const rai::Array<T>& w, uint
   T d(0), t(0);
   if(!im)
     for(uint i=v.N; i--;) {
-      d=(T)::fabs((double)(v.p[i]-w.p[i]));
-      if(d>t) t=d;
+      //d=(T)::fabs((double)(v.p[i]-w.p[i]));
+      //if(d>t) t=d;
+      t = std::max({t, (T)::fabs((double)(v.p[i]-w.p[i]))});
     } else {
     *im=0;
     for(uint i=v.N; i--;) { d=(T)::fabs((double)(v.p[i]-w.p[i])); if(d>t) { t=d; *im=i; } }

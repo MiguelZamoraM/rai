@@ -261,10 +261,18 @@ void rai::SplitFclInterface::step(const arr& X, const bool check_robot, const bo
   CHECK_EQ(X.d1, 7, "");
 
   std::vector<fcl::CollisionObject*> updated_robot_objs;
+
+  arr lhs;
+  arr rhs;
+
   for(auto* obj:robot_objects) {
     const uint i = (long int)obj->getUserData();
-    if(i<X_lastQuery.d0 && maxDiff(X_lastQuery[i], X[i])<1e-8) {
+    if (X_lastQuery.d0 > 0){
+    lhs.referToDim(X_lastQuery, i);
+    rhs.referToDim(X, i);
+    if(i<X_lastQuery.d0 && maxDiff(lhs, rhs)<1e-8) {
       continue;
+    }
     }
     obj->setTranslation(fcl::Vec3f(X(i, 0), X(i, 1), X(i, 2)));
     obj->setQuatRotation(fcl::Quaternion3f(X(i, 3), X(i, 4), X(i, 5), X(i, 6)));
@@ -273,31 +281,41 @@ void rai::SplitFclInterface::step(const arr& X, const bool check_robot, const bo
     updated_robot_objs.push_back(obj);
     //std::cout << "r updating " << i << std::endl;
   }
-  robot_manager->update(updated_robot_objs);
+  if (updated_robot_objs.size() > 0){
+    robot_manager->update(updated_robot_objs);
+  }
 
   // the static environment  only needs to be setup once
   if (!initialized_frame_state_){
     std::vector<fcl::CollisionObject*> updated_env_objs;
     for(auto* obj:env_objects) {
       const uint i = (long int)obj->getUserData();
-      if(i<X_lastQuery.d0 && maxDiff(X_lastQuery[i], X[i])<1e-8) {
+    if (X_lastQuery.d0 > 0){
+      lhs.referToDim(X_lastQuery, i);
+      rhs.referToDim(X, i);
+      if(i<X_lastQuery.d0 && maxDiff(lhs, rhs)<1e-8) {
         continue;
-      }
+      }}
       obj->setTranslation(fcl::Vec3f(X(i, 0), X(i, 1), X(i, 2)));
       obj->setQuatRotation(fcl::Quaternion3f(X(i, 3), X(i, 4), X(i, 5), X(i, 6)));
       obj->computeAABB();
 
       updated_env_objs.push_back(obj);
     }
-    env_manager->update(updated_env_objs);
+    if (updated_env_objs.size() > 0){
+      env_manager->update(updated_env_objs);
+    }
   }
 
   std::vector<fcl::CollisionObject*> updated_obs_objs;
   for(auto* obj:obs_objects) {
     const uint i = (long int)obj->getUserData();
-    if(i<X_lastQuery.d0 && maxDiff(X_lastQuery[i], X[i])<1e-8) {
+    if (X_lastQuery.d0 > 0){
+    lhs.referToDim(X_lastQuery, i);
+    rhs.referToDim(X, i);
+    if(i<X_lastQuery.d0 && maxDiff(lhs, rhs)<1e-8) {
       continue;
-    }
+    }}
     obj->setTranslation(fcl::Vec3f(X(i, 0), X(i, 1), X(i, 2)));
     obj->setQuatRotation(fcl::Quaternion3f(X(i, 3), X(i, 4), X(i, 5), X(i, 6)));
     obj->computeAABB();
@@ -305,7 +323,10 @@ void rai::SplitFclInterface::step(const arr& X, const bool check_robot, const bo
     updated_obs_objs.push_back(obj);
     //std::cout << "o updating " << i << std::endl;
   }
-  obs_manager->update(updated_obs_objs);
+
+  if (updated_obs_objs.size() > 0){
+    obs_manager->update(updated_obs_objs);
+  }
 
   collisions.clear();
 

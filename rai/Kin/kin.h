@@ -132,6 +132,7 @@ struct Configuration : GLDrawer {
   arr getFrameState() const { return getFrameState(frames); } ///< same as getFrameState() for all \ref frames
   arr getFrameState(const FrameL& F) const;
   arr getFrameState(const uintA& F) const { return getFrameState(getFrames(F)); } ///< same as getFrameState() with getFrames()
+  void getFrameStateInPlace(arr& X, const std::vector<uint>& ids) const;
 
   /// @name set state
   void setJointState(const arr& _q);

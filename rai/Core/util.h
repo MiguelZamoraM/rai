@@ -583,6 +583,7 @@ class Rnd {
 /// The global Rnd object
 extern rai::Rnd rnd;
 extern rai::Rnd rnd_;
+extern rai::Rnd rnd2_;
 
 //===========================================================================
 //

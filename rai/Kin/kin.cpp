@@ -503,10 +503,22 @@ arr Configuration::getJointState(const FrameL& joints) const {
 /// get the (F.N,7)-matrix of all poses for all given frames
 arr Configuration::getFrameState(const FrameL& F) const {
   arr X(F.N, 7);
+  arr tmp;
   for(uint i=0; i<X.d0; i++) {
-    F.elem(i)->ensure_X().getArr7dInplace(X[i]());
+    tmp.referToDim(X, i);
+    F.elem(i)->ensure_X().getArr7dInplace(tmp());
+    //F.elem(i)->ensure_X().getArr7dInplace(X[i]());
   }
   return X;
+}
+
+void Configuration::getFrameStateInPlace(arr &X, const std::vector<uint>& ids) const{
+  arr tmp;
+  for(const uint i: ids) {
+    tmp.referToDim(X, i);
+    frames.elem(i)->ensure_X().getArr7dInplace(tmp());
+    //F.elem(i)->ensure_X().getArr7dInplace(X[i]());
+  }
 }
 
 /// set the q-vector (all joint and forces DOFs)
@@ -1795,16 +1807,33 @@ void Configuration::InitSplitFcl(const std::vector<std::size_t>& robot_ids, cons
 }
 
 void Configuration::collideSplitFcl(const bool robot, const bool robot_obs, const bool obs_env){
-  const arr X = getFrameState();
+  arr X(this->frames.N, 7);
+  std::vector<uint> ids;
+  ids.reserve(this->frames.N);
+  for (const uint& id: self->splitfcl->robot_ids){
+    ids.push_back(id);
+  }
+  for (const uint& id: self->splitfcl->obs_ids){
+    ids.push_back(id);
+  }
+  // only update the static environment if we did not do so before
+  if (!self->splitfcl->initialized_frame_state_){
+    for (const uint& id: self->splitfcl->env_ids){
+      ids.push_back(id);
+    }
+  }
+  getFrameStateInPlace(X, ids);
   self->splitfcl->step(X, robot, robot_obs, obs_env);
 
-  proxies.clear();
+  if (proxies.N > 0){
+    proxies.clear();
+  }
   addProxies(self->splitfcl->collisions);
 
   _state_proxies_isGood=true;
 }
-shared_ptr<SplitFclInterface> Configuration::splitfcl(){
 
+shared_ptr<SplitFclInterface> Configuration::splitfcl(){
   return self->splitfcl;
 }
 
@@ -1937,7 +1966,7 @@ void Configuration::addProxies(const uintA& collisionPairs) {
 }
 
 void Configuration::stepSwift() {
-  arr X = getFrameState();
+  const arr X = getFrameState();
   uintA collisionPairs = swift()->step(X, false);
   //  reportProxies();
   //  watch(true);

@@ -572,7 +572,8 @@ void glStandardScene(void*, OpenGL& gl) {
   //glDrawFloor(10, 1.5, 0.83, .0);
   // glDrawFloor(10., 108./255., 123./255., 139./255.);
   //glDrawFloor(4., 217./255., 217./255., 217./255.);
-  glDrawFloor(13., 217./255., 217./255., 217./255.);
+  //glDrawFloor(13., 217./255., 217./255., 217./255.);
+  glDrawFloor(13., 255./255., 255./255., 255./255.);
   glDrawAxes(.1);
   glPopAttrib();
 }
