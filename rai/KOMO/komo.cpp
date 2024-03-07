@@ -1829,7 +1829,20 @@ void KOMO::run_prepare(double addInitializationNoise, const bool uniform) {
       }
     }
     else{
-      rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+      if (true){
+        const arr limits = pathConfig.getLimits();
+        const uint dim = limits.dim(0);
+        arr s(dim);
+        for (uint j=0; j<s.d0; ++j){
+          s(j) = x(j);
+        }
+        //s = x[0];
+        rndGauss(s, addInitializationNoise, true); //don't initialize at a singular config
+        x = s();
+      }
+      else{
+        rndGauss(x, addInitializationNoise, true); //don't initialize at a singular config
+      }
     }
   }
 }

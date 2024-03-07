@@ -1340,7 +1340,7 @@ void rai::Shape::createMeshes() {
     case rai::ST_capsule:
       CHECK(size(-1)>1e-10, "");
       sscCore().V = arr({2, 3}, {0., 0., -.5*size(-2), 0., 0., .5*size(-2)});
-      mesh().setSSCvx(sscCore().V, size(-1), 4);
+      mesh().setSSCvx(sscCore().V, size(-1), 2);
       break;
     case rai::ST_marker:
       break;

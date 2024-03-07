@@ -15,6 +15,8 @@ GJK = 1
 CCD = 1
 Lewiner = 1
 
+#CXXFLAGS += -fopenmp
+
 SRCS = $(shell find . -maxdepth 1 -name '*.cpp' )
 OBJS = $(SRCS:%.cpp=%.o)
 

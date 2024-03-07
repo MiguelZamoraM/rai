@@ -51,6 +51,8 @@ struct FclInterface {
   std::unordered_set<std::size_t> deactivatedPairs;
   std::unordered_set<std::size_t> temporaryDeactivatedPairs;
 
+  std::unordered_set<std::size_t> relevant_ids;
+
   // sets of things that do not need to be collision checked against each other.
   // avoids the insertion cost
   std::vector<std::unordered_set<std::size_t>*> *vec = nullptr;

@@ -977,8 +977,8 @@ void Configuration::addTauJoint() {
 }
 
 bool Configuration::hasTauJoint(Frame *f) {
-  if(!f) f = frames.first();
-  else f = f->getRoot();
+  if(!f) {f = frames.first();}
+  else {f = f->getRoot();}
   return f && f->joint && (f->joint->type==JT_tau);
 }
 
@@ -2795,9 +2795,9 @@ void Configuration::glDraw_sub(OpenGL& gl, const FrameL& F, int drawOpaqueOrTran
     }
 
     //proxies
-//    if(orsDrawProxies) for(const Proxy& p: proxies) {
-//        ((Proxy*)&p)->glDraw(gl);
-//      }
+   if(true) for(const Proxy& p: proxies) {
+       ((Proxy*)&p)->glDraw(gl);
+     }
 
     for(Frame* fr: F) for(ForceExchange* f:fr->forces) {
       if(f->sign(fr)>0.) f->glDraw(gl);

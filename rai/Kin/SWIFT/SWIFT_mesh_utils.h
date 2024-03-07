@@ -60,7 +60,7 @@
 #include "SWIFT_array.h"
 
 extern "C" {
-#include <qhull/qhull_a.h>
+#include <libqhull/qhull_a.h>
 }
 
 // Call this before calling any other mesh utils functions

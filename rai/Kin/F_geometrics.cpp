@@ -46,7 +46,7 @@ void F_InsideBox::phi2(arr& y, arr& J, const FrameL& F) {
   Value pos = F_PositionRel() .eval({pnt, box});
   arr range = box->shape->size();
   range *= .5;
-  range -= margin;
+  range -= 0.005;
   for(double& r:range) if(r<.01) r=.01;
 
   pnt->C.kinematicsZero(y, J, 6);

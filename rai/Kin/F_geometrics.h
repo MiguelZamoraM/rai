@@ -23,7 +23,7 @@ struct F_AboveBox : Feature {
 struct F_InsideBox : Feature {
   rai::Vector ivec;       ///< additional position or vector
   double margin;
-  F_InsideBox(double _margin=.01) : margin(_margin) {}
+  F_InsideBox(double _margin=.0) : margin(_margin) {}
   virtual void phi2(arr& y, arr& J, const FrameL& F);
   virtual uint dim_phi2(const FrameL& F) { return 6; }
 };

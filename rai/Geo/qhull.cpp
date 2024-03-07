@@ -12,11 +12,7 @@
 #include "mesh.h"
 
 extern "C" {
-#ifdef RAI_MSVC
 #  include <libqhull/qhull_a.h>
-#else
-#  include <qhull/qhull_a.h>
-#endif
 }
 #undef dX
 #undef dY

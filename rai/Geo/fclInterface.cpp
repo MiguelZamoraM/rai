@@ -74,6 +74,7 @@ void rai::FclInterface::step(const arr& X) {
 
   std::vector<fcl::CollisionObject*> updated_objs;
 
+  // #pragma omp parallel for
   for(auto* obj:objects) {
     const uint i = (long int)obj->getUserData();
     if(i<X_lastQuery.d0 && maxDiff(X_lastQuery[i], X[i])<1e-8) {
@@ -125,6 +126,13 @@ void rai::FclInterface::addCollision(void* userData1, void* userData2) {
 // Return value indicates if we can stop early
 bool rai::FclInterface::BroadphaseCallback(fcl::CollisionObject* o1, fcl::CollisionObject* o2, void* cdata_) {
   rai::FclInterface* self = static_cast<rai::FclInterface*>(cdata_);
+
+  if (self->relevant_ids.size() > 0) {
+    if (self->relevant_ids.count((long int)o1->getUserData()) == 0 &&
+        self->relevant_ids.count((long int)o2->getUserData()) == 0){
+      return false;
+    }
+  }
 
   // If a pair is part of the deactivated pairs, skip it
   const auto pair = self->key((long int)o1->getUserData(), (long int)o2->getUserData());
