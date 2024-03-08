@@ -17,7 +17,7 @@ rai::ConfigurationViewer::~ConfigurationViewer() {
 
 OpenGL& rai::ConfigurationViewer::ensure_gl() {
   if(!gl) {
-    gl = make_shared<OpenGL>("ConfigurationViewer");
+    gl = make_shared<OpenGL>("ConfigurationViewer", 400, 400, offscreen);
     gl->camera.setDefault();
     gl->add(*this);
   }

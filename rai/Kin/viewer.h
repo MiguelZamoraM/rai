@@ -55,6 +55,8 @@ struct ConfigurationViewer : GLDrawer {
 public:
   ptr<struct OpenGL> gl;
   bool drawFrameLines=true;
+
+  bool offscreen{false};
 };
 
 }
