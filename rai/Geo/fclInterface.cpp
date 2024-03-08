@@ -16,37 +16,6 @@
 // #include <fcl/collision.h>
 // #include <fcl/collision_data.h>
 
-#include <fcl/config.h>
-#if FCL_MINOR_VERSION >= 6
-#  include <fcl/fcl.h>
-typedef fcl::CollisionObject<float> CollObject;
-typedef fcl::Vector3<float> Vec3f;
-typedef fcl::Quaternionf Quaternionf;
-typedef fcl::BroadPhaseCollisionManager<float> BroadPhaseCollisionManager;
-typedef fcl::DynamicAABBTreeCollisionManager<float> DynamicAABBTreeCollisionManager;
-typedef fcl::NaiveCollisionManager<float> NaiveCollisionManager;
-typedef fcl::CollisionRequest<float> CollisionRequest;
-typedef fcl::CollisionResult<float> CollisionResult;
-typedef fcl::DistanceRequest<float> DistanceRequest;
-typedef fcl::DistanceResult<float> DistanceResult;
-#else
-#  include <fcl/broadphase/broadphase.h>
-#  include <fcl/BVH/BVH_model.h>
-#  include <fcl/distance.h>
-#  include <fcl/collision.h>
-#  include <fcl/collision_data.h>
-typedef fcl::CollisionObject CollObject;
-typedef fcl::Vec3f Vec3f;
-typedef fcl::Quaternion3f Quaternionf;
-typedef fcl::BroadPhaseCollisionManager BroadPhaseCollisionManager;
-typedef fcl::DynamicAABBTreeCollisionManager DynamicAABBTreeCollisionManager;
-typedef fcl::NaiveCollisionManager NaiveCollisionManager;
-typedef fcl::CollisionRequest CollisionRequest;
-typedef fcl::CollisionResult CollisionResult;
-typedef fcl::DistanceRequest DistanceRequest;
-typedef fcl::DistanceResult DistanceResult;
-#endif
-
 namespace rai {
 struct ConvexGeometryData {
   arr plane_dis;
@@ -73,7 +42,17 @@ rai::FclInterface::FclInterface(const rai::Array<ptr<Mesh>>& geometries, double 
       copy<int>(dat->polygons, mesh.T);
       dat->polygons.insColumns(0);
       for(uint i=0; i<dat->polygons.d0; i++) {dat->polygons(i, 0) = 3;}
+
+#if FCL_MINOR_VERSION >= 7
+      auto verts = make_shared<std::vector<fcl::Vector3<float>>>(mesh.V.d0);
+      auto faces = make_shared<std::vector<int>>(mesh.T.N);
+      for(uint i=0; i<verts->size(); i++)(*verts)[i] = {(float)mesh.V(i, 0), (float)mesh.V(i, 1), (float)mesh.V(i, 2)};
+      for(uint i=0; i<faces->size(); i++)(*faces)[i] = mesh.T.elem(i);
+      auto model = make_shared<fcl::Convex<float>>(verts, mesh.T.d0, faces, true);
+#else
       const auto model = make_shared<fcl::Convex>((Vec3f*)mesh.Tn.p, dat->plane_dis.p, mesh.T.d0, (Vec3f*)mesh.V.p, mesh.V.d0, (int*)dat->polygons.p);
+#endif
+
       convexGeometryData(i) = dat;
 #else
       const auto model = make_shared<fcl::Sphere>(mesh.getRadius());
