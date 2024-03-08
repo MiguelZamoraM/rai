@@ -6,6 +6,7 @@ OPTIM = fast_debug
 
 DEPEND = Core Geo GeoOptim Algo Gui 
 
+FCL = 1
 GL = 1
 PHYSX = 1
 BULLET = 1

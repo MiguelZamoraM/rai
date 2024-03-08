@@ -244,7 +244,7 @@ void PairCollision::libccd(rai::Mesh& m1, rai::Mesh& m2, CCDmethod method) {
   bool penetration=false;
 
   if(method==_ccdMPRPenetration) {
-    int ret = ccdMPRPenetration(&m1, &m2, &ccd, &_depth, &_dir, &_pos, simplex);
+    int ret = ccdMPRPenetrationRai(&m1, &m2, &ccd, &_depth, &_dir, &_pos, simplex);
     if(ret<0) {
       //LOG(0) <<"WARNING: called MPR penetration for non intersecting meshes...";
       m1._support_vertex = rnd(m1.V.d0);
@@ -277,7 +277,7 @@ void PairCollision::libccd(rai::Mesh& m1, rai::Mesh& m2, CCDmethod method) {
     if(simplex2.d0>3) simplex2.resizeCopy(3, 3);
 
   } else if(method==_ccdGJKIntersect) {
-    int ret = ccdGJKIntersect(&m1, &m2, &ccd, &_v1, &_v2, simplex);
+    int ret = ccdGJKIntersectRai(&m1, &m2, &ccd, &_v1, &_v2, simplex);
     if(ret) {
       distance = -1.;
       return;

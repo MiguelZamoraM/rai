@@ -8,14 +8,23 @@
 
 #pragma once
 
-#include "mesh.h"
+// #include "mesh.h"
+#include "../Kin/frame.h"
 
 #include <unordered_set>
 
+// namespace fcl {
+// class CollisionObject;
+// class DynamicAABBTreeCollisionManager;
+// class BroadPhaseCollisionManager;
+// };
+
 #include <fcl/config.h>
 #if FCL_MINOR_VERSION >= 6
-#  include <fcl/fcl.h>
+#  include "fcl/fcl.h"
 typedef fcl::CollisionObject<float> CollObject;
+typedef fcl::CollisionGeometry<float> CollGeom;
+
 typedef fcl::Vector3<float> Vec3f;
 typedef fcl::Quaternionf Quaternionf;
 typedef fcl::BroadPhaseCollisionManager<float> BroadPhaseCollisionManager;
@@ -25,6 +34,10 @@ typedef fcl::CollisionRequest<float> CollisionRequest;
 typedef fcl::CollisionResult<float> CollisionResult;
 typedef fcl::DistanceRequest<float> DistanceRequest;
 typedef fcl::DistanceResult<float> DistanceResult;
+typedef fcl::Box<float> Box;
+typedef fcl::Sphere<float> Sphere;
+typedef fcl::Capsule<float> Capsule;
+typedef fcl::Cylinder<float> Cylinder;
 #else
 #  include <fcl/broadphase/broadphase.h>
 #  include <fcl/BVH/BVH_model.h>
@@ -32,6 +45,7 @@ typedef fcl::DistanceResult<float> DistanceResult;
 #  include <fcl/collision.h>
 #  include <fcl/collision_data.h>
 typedef fcl::CollisionObject CollObject;
+typedef fcl::CollisionGeometry CollGeom;
 typedef fcl::Vec3f Vec3f;
 typedef fcl::Quaternion3f Quaternionf;
 typedef fcl::BroadPhaseCollisionManager BroadPhaseCollisionManager;
@@ -41,13 +55,16 @@ typedef fcl::CollisionRequest CollisionRequest;
 typedef fcl::CollisionResult CollisionResult;
 typedef fcl::DistanceRequest DistanceRequest;
 typedef fcl::DistanceResult DistanceResult;
+
+typedef fcl::Box Box;
+typedef fcl::Sphere Sphere;
+typedef fcl::Capsule Capsule;
+typedef fcl::Cylinder Cylinder;
+
 #endif
 
-// namespace fcl {
-// class CollisionObject;
-// class DynamicAABBTreeCollisionManager;
+// class CollObject;
 // class BroadPhaseCollisionManager;
-// };
 
 namespace rai {
 
@@ -89,7 +106,7 @@ struct FclInterface {
   // avoids the insertion cost
   std::vector<std::unordered_set<std::size_t>*> *vec = nullptr;
 
-  FclInterface(const Array<ptr<Mesh>>& geometries, double _cutoff=0.);
+  FclInterface(const Array<Shape*>& shapes, double _cutoff=0.);
   ~FclInterface();
 
   void step(const arr& X);
@@ -147,7 +164,7 @@ struct SplitFclInterface {
   SplitFclInterface(){};
   ~SplitFclInterface();
 
-  void Init(const Array<ptr<Mesh>>& geometries, const std::unordered_set<std::size_t>& robot, const std::unordered_set<std::size_t>& obs, const std::unordered_set<std::size_t>& env,  double _cutoff=0.);
+  void Init(const Array<Shape*>& geometries, const std::unordered_set<std::size_t>& robot, const std::unordered_set<std::size_t>& obs, const std::unordered_set<std::size_t>& env,  double _cutoff=0.);
 
   void step(const arr& X, const bool check_robot, const bool check_robot_obs, const bool check_obs_env);
 

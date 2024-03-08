@@ -40,7 +40,7 @@ void F_InsideBox::phi2(arr& y, arr& J, const FrameL& F) {
   rai::Frame* pnt=F.elem(0);
   rai::Frame* box=F.elem(1);
   CHECK(box->shape, "I need shapes!");
-  CHECK(box->shape->type()==rai::ST_ssBox, "the 2nd shape needs to be a box"); //s1 should be the board
+  CHECK(box->shape->type()==rai::ST_ssBox || box->shape->type()==rai::ST_box, "the 2nd shape needs to be a box"); //s1 should be the board
 //  arr pos, posJ;
 //  G.kinematicsRelPos(pos, posJ, &pnt->frame, ivec, &box->frame, NoVector);
   Value pos = F_PositionRel() .eval({pnt, box});

@@ -23,41 +23,59 @@ struct ConvexGeometryData {
 };
 }
 
-rai::FclInterface::FclInterface(const rai::Array<ptr<Mesh>>& geometries, double _cutoff)
+rai::FclInterface::FclInterface(const rai::Array<Shape*>& geometries, double _cutoff)
   : cutoff(_cutoff) {
   convexGeometryData.resize(geometries.N);
   for(long int i=0; i<geometries.N; i++) {
-    if(geometries(i)) {
-      rai::Mesh& mesh = *geometries(i);
+    Shape* shape = geometries(i);
+
+    if(shape) {
+      // rai::Mesh& mesh = *geometries(i);
+      std::shared_ptr<CollGeom> geom;
+      if(shape->type()==ST_capsule) {
+        geom = make_shared<Capsule>(shape->size(-1), shape->size(-2));
+      } else if(shape->type()==ST_cylinder) {
+        geom = make_shared<Cylinder>(shape->size(-1), shape->size(-2));
+      } else if(shape->type()==ST_sphere) {
+        geom = make_shared<Sphere>(shape->size(-1));
+      }else if(shape->type()==ST_box){
+        geom = make_shared<Box>(shape->size(0), shape->size(1), shape->size(2));
+      } else {
+        std::cout << shape->type() << std::endl;
+        std::cout << shape->frame.name << std::endl;
+        rai::Mesh& mesh = shape->mesh();
 #if 0
-      auto model = make_shared<fcl::BVHModel<fcl::OBBRSS>>();
-      model->beginModel();
-      for(uint i=0; i<mesh.T.d0; i++)
-        model->addTriangle(Vec3f(&mesh.V(mesh.T(i, 0), 0)), Vec3f(&mesh.V(mesh.T(i, 1), 0)), Vec3f(&mesh.V(mesh.T(i, 2), 0)));
-      model->endModel();
+        auto model = make_shared<fcl::BVHModel<fcl::OBBRSS>>();
+        model->beginModel();
+        for(uint i=0; i<mesh.T.d0; i++)
+          model->addTriangle(Vec3f(&mesh.V(mesh.T(i, 0), 0)), Vec3f(&mesh.V(mesh.T(i, 1), 0)), Vec3f(&mesh.V(mesh.T(i, 2), 0)));
+        model->endModel();
 #elif 1
-      mesh.computeNormals();
-      std::shared_ptr<ConvexGeometryData> dat = make_shared<ConvexGeometryData>();
-      dat->plane_dis = mesh.computeTriDistances();
-      copy<int>(dat->polygons, mesh.T);
-      dat->polygons.insColumns(0);
-      for(uint i=0; i<dat->polygons.d0; i++) {dat->polygons(i, 0) = 3;}
+        mesh.computeNormals();
+        std::shared_ptr<ConvexGeometryData> dat = make_shared<ConvexGeometryData>();
+        dat->plane_dis = mesh.computeTriDistances();
+        copy<int>(dat->polygons, mesh.T);
+        dat->polygons.insColumns(0);
+        for(uint i=0; i<dat->polygons.d0; i++) {dat->polygons(i, 0) = 3;}
 
 #if FCL_MINOR_VERSION >= 7
-      auto verts = make_shared<std::vector<fcl::Vector3<float>>>(mesh.V.d0);
-      auto faces = make_shared<std::vector<int>>(mesh.T.N);
-      for(uint i=0; i<verts->size(); i++)(*verts)[i] = {(float)mesh.V(i, 0), (float)mesh.V(i, 1), (float)mesh.V(i, 2)};
-      for(uint i=0; i<faces->size(); i++)(*faces)[i] = mesh.T.elem(i);
-      auto model = make_shared<fcl::Convex<float>>(verts, mesh.T.d0, faces, true);
+        auto verts = make_shared<std::vector<fcl::Vector3<float>>>(mesh.V.d0);
+        auto faces = make_shared<std::vector<int>>(mesh.T.N);
+        for(uint i=0; i<verts->size(); i++){(*verts)[i] = {(float)mesh.V(i, 0), (float)mesh.V(i, 1), (float)mesh.V(i, 2)};
+        std::cout << mesh.V(i, 0) << " " << mesh.V(i, 1) << " " << mesh.V(i, 2) << std::endl;}
+        for(uint i=0; i<faces->size(); i++){(*faces)[i] = mesh.T.elem(i) * 1.;
+        std::cout << mesh.T.elem(i) << std::endl;}
+        geom = make_shared<fcl::Convex<float>>(verts, mesh.T.d0, faces, true);
 #else
-      const auto model = make_shared<fcl::Convex>((Vec3f*)mesh.Tn.p, dat->plane_dis.p, mesh.T.d0, (Vec3f*)mesh.V.p, mesh.V.d0, (int*)dat->polygons.p);
+        geom = make_shared<fcl::Convex>((Vec3f*)mesh.Tn.p, dat->plane_dis.p, mesh.T.d0, (Vec3f*)mesh.V.p, mesh.V.d0, (int*)dat->polygons.p);
 #endif
 
-      convexGeometryData(i) = dat;
+        convexGeometryData(i) = dat;
 #else
-      const auto model = make_shared<fcl::Sphere>(mesh.getRadius());
+        const auto model = make_shared<fcl::Sphere>(mesh.getRadius());
 #endif
-      CollObject* obj = new CollObject(model, fcl::Transform3f());
+      }
+      CollObject* obj = new CollObject(geom, fcl::Transform3f());
       obj->setUserData((void*)(i));
       objects.push_back(obj);
     }
@@ -188,7 +206,7 @@ bool rai::FclInterface::BroadphaseCallback(CollObject* o1, CollObject* o2, void*
   return false;
 }
 
-void rai::SplitFclInterface::Init(const Array<ptr<Mesh>>& geometries, const std::unordered_set<std::size_t>& robot, const std::unordered_set<std::size_t>& obs, const std::unordered_set<std::size_t>& env,  double _cutoff){
+void rai::SplitFclInterface::Init(const Array<Shape*>& geometries, const std::unordered_set<std::size_t>& robot, const std::unordered_set<std::size_t>& obs, const std::unordered_set<std::size_t>& env,  double _cutoff){
   cutoff = _cutoff;
   convexGeometryData.resize(geometries.N);
 
@@ -198,7 +216,7 @@ void rai::SplitFclInterface::Init(const Array<ptr<Mesh>>& geometries, const std:
 
   for(long int i=0; i<geometries.N; i++) {
     if(geometries(i)) {
-      rai::Mesh& mesh = *geometries(i);
+      rai::Mesh& mesh = geometries(i)->mesh();
 #if 0
       auto model = make_shared<fcl::BVHModel<fcl::OBBRSS>>();
       model->beginModel();
@@ -212,7 +230,17 @@ void rai::SplitFclInterface::Init(const Array<ptr<Mesh>>& geometries, const std:
       copy<int>(dat->polygons, mesh.T);
       dat->polygons.insColumns(0);
       for(uint j=0; j<dat->polygons.d0; j++) {dat->polygons(j, 0) = 3;}
+
+#if FCL_MINOR_VERSION >= 7
+      auto verts = make_shared<std::vector<fcl::Vector3<float>>>(mesh.V.d0);
+      auto faces = make_shared<std::vector<int>>(mesh.T.N);
+      for(uint i=0; i<verts->size(); i++)(*verts)[i] = {(float)mesh.V(i, 0), (float)mesh.V(i, 1), (float)mesh.V(i, 2)};
+      for(uint i=0; i<faces->size(); i++)(*faces)[i] = mesh.T.elem(i);
+      auto model = make_shared<fcl::Convex<float>>(verts, mesh.T.d0, faces, true);
+#else
       const auto model = make_shared<fcl::Convex>((Vec3f*)mesh.Tn.p, dat->plane_dis.p, mesh.T.d0, (Vec3f*)mesh.V.p, mesh.V.d0, (int*)dat->polygons.p);
+#endif     
+
       convexGeometryData(i) = dat;
 #else
       const auto model = make_shared<fcl::Sphere>(mesh.getRadius());

@@ -1790,11 +1790,11 @@ std::shared_ptr<SwiftInterface> Configuration::swift() {
 }
 
 void Configuration::InitSplitFcl(const std::vector<std::size_t>& robot_ids, const std::vector<std::size_t>& obs_ids, const  std::vector<std::size_t>& env_ids){
-  Array<ptr<Mesh>> geometries(frames.N);
+  Array<Shape*> geometries(frames.N);
   for(Frame* f:frames) {
     if(f->shape && f->shape->cont) {
       if(!f->shape->mesh().V.N) f->shape->createMeshes();
-      geometries(f->ID) = f->shape->_mesh;
+      geometries(f->ID) = f->shape;
     }
   }
   self->splitfcl = make_shared<SplitFclInterface>();
@@ -1839,11 +1839,15 @@ shared_ptr<SplitFclInterface> Configuration::splitfcl(){
 
 std::shared_ptr<FclInterface> Configuration::fcl() {
   if(!self->fcl) {
-    Array<ptr<Mesh>> geometries(frames.N);
+    Array<Shape*> geometries(frames.N);
+    geometries.memMove = 1;
+    geometries.setZero();
+
+
     for(Frame* f:frames) {
       if(f->shape && f->shape->cont) {
         if(!f->shape->mesh().V.N) f->shape->createMeshes();
-        geometries(f->ID) = f->shape->_mesh;
+        geometries(f->ID) = f->shape;
       }
     }
     self->fcl = make_shared<FclInterface>(geometries, .0); //-1.=broadphase only -> many proxies

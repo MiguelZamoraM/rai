@@ -115,6 +115,14 @@ int ccdMPRIntersect(const void *obj1, const void *obj2, const ccd_t *ccd)
 }
 
 int ccdMPRPenetration(const void *obj1, const void *obj2, const ccd_t *ccd,
+                      ccd_real_t *depth, ccd_vec3_t *dir, ccd_vec3_t *pos)
+{
+  return ccdMPRPenetrationRai(obj1, obj2,
+		       ccd, depth,
+		       dir, pos, 0);
+}
+
+int ccdMPRPenetrationRai(const void *obj1, const void *obj2, const ccd_t *ccd,
                       ccd_real_t *depth, ccd_vec3_t *dir, ccd_vec3_t *pos, ccd_vec3_t simplex[8])
 {
     ccd_simplex_t portal;
@@ -144,9 +152,11 @@ int ccdMPRPenetration(const void *obj1, const void *obj2, const ccd_t *ccd,
         findPenetr(obj1, obj2, ccd, &portal, depth, dir, pos);
     }
 
-    for(unsigned int i=0;i<4;i++){
-       simplex[0+i] = portal.ps[i].v1;
-       simplex[4+i] = portal.ps[i].v2;
+    if(simplex){
+      for(unsigned int i=0;i<4;i++){
+        simplex[0+i] = portal.ps[i].v1;
+        simplex[4+i] = portal.ps[i].v2;
+      }
     }
 
     return res;
