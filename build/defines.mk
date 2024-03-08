@@ -46,6 +46,7 @@ ifeq ($(FCL),1)
 DEPEND_UBUNTU += libfcl-dev
 CXXFLAGS  += -DRAI_FCL
 LIBS      += -lfcl
+EIGEN = 1
 #LPATHS += $(HOME)/git/fcl/build/lib
 #CPATH := $(CPATH):$(HOME)/git/fcl/build/include:$(HOME)/git/fcl/include
 LPATHS += $(HOME)/git/fcl-new/build/lib

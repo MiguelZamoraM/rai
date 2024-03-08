@@ -6,6 +6,7 @@ OPTIM = fast_debug
 
 DEPEND = Core Geo Kin Optim Algo
 
+EIGEN = 1
 GL = 1
 
 SRCS = $(shell find . -maxdepth 1 -name '*.cpp' )
