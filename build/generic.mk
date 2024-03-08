@@ -11,6 +11,10 @@
 BASE_ORIGINAL := $(BASE)
 BASE := $(shell realpath $(BASE))
 
+ifdef BASE2
+BASE2 := $(shell realpath $(BASE2))
+endif
+
 
 ################################################################################
 #
