@@ -123,7 +123,7 @@ int rai::ConfigurationViewer::setPath(const arr& _framePath, const char* text, b
     auto _dataLock = gl->dataLock(RAI_HERE);
     framePath = _framePath;
     drawFullPath = full;
-    drawTimeSlice=-1;
+    drawTimeSlice=0;
     if(text) drawText = text;
   }
 

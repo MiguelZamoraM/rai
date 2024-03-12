@@ -149,6 +149,8 @@ void rai::FclInterface::addCollision(void* userData1, void* userData2) {
   collisions.resizeCopy(collisions.N+2);
   collisions.elem(-2) = a;
   collisions.elem(-1) = b;
+
+  // std::cout << a << " " << b << std::endl;
 }
 
 // Return value indicates if we can stop early
