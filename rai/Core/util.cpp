@@ -109,7 +109,7 @@ QApplication* myApp=nullptr;
 
 /// running a system command and checking return value
 void system(const char* cmd) {
-  cout <<"SYSTEM CMD: " <<cmd <<endl;
+  // cout <<"SYSTEM CMD: " <<cmd <<endl;
   int r = ::system(cmd);
   rai::wait(.1);
   if(r) HALT("system return error " <<r);

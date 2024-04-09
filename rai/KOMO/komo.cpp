@@ -1779,7 +1779,7 @@ void KOMO::run_prepare(double addInitializationNoise, const bool uniform) {
   //add noise
   if(addInitializationNoise>0.) {
     if (uniform){
-      const bool keyframeRnd = false;
+      const bool keyframeRnd = true;
       if (keyframeRnd){
         const arr limits = world.getLimits();
 
