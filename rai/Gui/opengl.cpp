@@ -550,15 +550,15 @@ arr id2color(uint id) {
 #ifdef RAI_GL
 void glStandardLight(void*, OpenGL&) {
   glEnable(GL_LIGHTING);
-  static GLfloat ambient[]   = { .5, .5, .5, 1.0 };
+  static GLfloat ambient[]   = { .4, .4, .4, 1.0 };
   static GLfloat diffuse[]   = { .2, .2, .2, 1.0 };
-  static GLfloat specular[]  = { .3, .3, .3, 1.0 };
+  static GLfloat specular[]  = { .5, .5, .5, 1.0 };
   static GLfloat position[]  = { 100.0, -100.0, 100.0, 1.0 };
   static GLfloat direction[] = { -1.0, 1.0, -1.0 };
   glLightfv(GL_LIGHT0, GL_POSITION, position);
   glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, direction);
   glLighti(GL_LIGHT0, GL_SPOT_CUTOFF,   90);
-  glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, 10);
+  glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, 0);
   glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse);
   glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
@@ -1720,7 +1720,8 @@ void OpenGL::Draw(int w, int h, rai::Camera* cam, bool callerHasAlreadyLocked) {
   glEnable(GL_DEPTH_TEST);  glDepthFunc(GL_LESS);
   glEnable(GL_BLEND);  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);  glFrontFace(GL_CCW);
-  glShadeModel(GL_FLAT);  //glShadeModel(GL_SMOOTH);
+  glShadeModel(GL_FLAT);  
+  //glShadeModel(GL_SMOOTH);
 
   if(drawOptions.pclPointSize>0.) glPointSize(drawOptions.pclPointSize);
 
