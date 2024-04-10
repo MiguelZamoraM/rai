@@ -838,7 +838,8 @@ void Configuration::clear() {
 
   reset_q();
   proxies.clear(); //while(proxies.N){ delete proxies.last(); /*checkConsistency();*/ }
-  while(frames.N) { delete frames.last(); /*checkConsistency();*/ }
+  for (auto f: frames){ f->clean_upon_deletion = false; delete f;}
+  // while(frames.N) { delete frames.last(); /*checkConsistency();*/ }
   reset_q();
 
   _state_proxies_isGood=false;
@@ -1885,6 +1886,7 @@ bool Configuration::hasView(){
 
 int Configuration::watch(bool pause, const char* txt) {
 //  gl()->pressedkey=0;
+// gl()->
   int key = gl()->setConfiguration(*this, txt, pause);
 //  if(pause) {
 //    if(!txt) txt="Config::watch";

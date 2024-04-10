@@ -73,6 +73,8 @@ struct Frame : NonCopyable {
   Frame* parent=nullptr;   ///< parent frame
   FrameL children;         ///< list of children
 
+  bool clean_upon_deletion = true;
+
   Transformation X=0;        ///< frame's absolute pose
  protected:
   Transformation Q=0;        ///< relative transform to parent

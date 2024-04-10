@@ -72,12 +72,15 @@ rai::Frame::~Frame() {
   if(joint) delete joint;
   if(shape) delete shape;
   if(inertia) delete inertia;
-  if(parent) unLink();
-  while(children.N) children.last()->unLink();
-  CHECK_EQ(this, C.frames.elem(ID), "")
-  C.frames.remove(ID);
-  listReindex(C.frames);
-  C.reset_q();
+
+  if (clean_upon_deletion){
+    if(parent) unLink();
+    while(children.N) children.last()->unLink();
+    CHECK_EQ(this, C.frames.elem(ID), "")
+    C.frames.remove(ID);
+    listReindex(C.frames);
+    C.reset_q();
+  }
 }
 
 void rai::Frame::calc_X_from_parent() {
