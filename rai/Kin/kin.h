@@ -163,7 +163,7 @@ struct Configuration : GLDrawer {
   bool check_topSort() const;
 
   /// @name structural operations, changes of configuration
-  void clear();
+  void clear(bool destructing=false);
   void reset_q();
   void reconfigureRoot(Frame* newRoot, bool ofLinkOnly);  ///< n becomes the root of the kinematic tree; joints accordingly reversed; lists resorted
   void flipFrames(Frame* a, Frame* b);

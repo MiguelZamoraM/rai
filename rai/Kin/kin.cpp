@@ -131,7 +131,8 @@ Configuration::~Configuration() {
   self->viewer.reset();
   self->swift.reset();
   self->fcl.reset();
-  clear();
+
+  clear(true);
   self.reset();
 }
 
@@ -832,14 +833,14 @@ bool Configuration::check_topSort() const {
 
 
 /// clear all frames, forces & proxies
-void Configuration::clear() {
+void Configuration::clear(bool destructing) {
 //  glClose();
   swiftDelete();
 
   reset_q();
   proxies.clear(); //while(proxies.N){ delete proxies.last(); /*checkConsistency();*/ }
-  for (auto f: frames){ f->clean_upon_deletion = false; delete f;}
-  // while(frames.N) { delete frames.last(); /*checkConsistency();*/ }
+  if (destructing) {for (auto f: frames){ f->clean_upon_deletion = false; delete f;}}
+  else {while(frames.N) { delete frames.last(); /*checkConsistency();*/ }}
   reset_q();
 
   _state_proxies_isGood=false;
