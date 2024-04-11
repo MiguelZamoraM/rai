@@ -47,10 +47,14 @@ DEPEND_UBUNTU += libfcl-dev
 CXXFLAGS  += -DRAI_FCL
 LIBS      += -lfcl
 EIGEN = 1
-#LPATHS += $(HOME)/git/fcl/build/lib
-#CPATH := $(CPATH):$(HOME)/git/fcl/build/include:$(HOME)/git/fcl/include
-LPATHS += $(HOME)/git/fcl-new/build/lib
-CPATH := $(CPATH):$(HOME)/git/fcl-new/build/include:$(HOME)/git/fcl-new/include
+ifndef FCL_PATH
+FCL_PATH=$(HOME)/git/fcl-new
+endif
+LPATHS += $(FCL_PATH)/build/lib
+CPATH := $(CPATH):$(FCL_PATH)/build/include:$(FCL_PATH)/include
+$(info   FCL_PATH is $(FCL_PATH))
+$(info   LPATHS is $(LPATHS))
+$(info   CPATH is $(CPATH))
 endif
 
 ifeq ($(CCD),1)
